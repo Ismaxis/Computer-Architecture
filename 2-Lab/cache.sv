@@ -4,20 +4,39 @@ module cache (
     inout [MEM_ADDR_SIZE-1:0] cpu_address,
     inout [CACHE_LINE_SIZE*8-1:0] cpu_data,
     inout [2:0] cpu_command,
+
+    inout [MEM_ADDR_SIZE-1:0] mem_address,
+    inout [CACHE_LINE_SIZE*8-1:0] mem_data,
+    inout [1:0] mem_command,
+
 );
-    parameter CACHE_WAY = 2;
-    parameter CACHE_LINE_SIZE = 16;
-    parameter CACHE_LINE_COUNT = 64;
-    parameter CACHE_SIZE = CACHE_LINE_COUNT * CACHE_LINE_SIZE;
+    parameter CACHE_WAY         = 2;
+    parameter CACHE_LINE_SIZE   = 16;
+    parameter CACHE_LINE_COUNT  = 64;
+    parameter CACHE_SIZE        = CACHE_LINE_COUNT * CACHE_LINE_SIZE;
 
-    parameter CACHE_SET_SIZE = 5;    // log2(CACHE_LINE_COUNT/CACHE_WAY)
-    parameter CACHE_OFFSET_SIZE = 4; // log2(CACHE_LINE_SIZE)
-    parameter CACHE_TAG_SIZE = 10;   // CACHE_LINE_SIZE - CACHE_SET_SIZE - CACHE_OFFSET_SIZE
+    parameter CACHE_SET_SIZE    = 5;    // log2(CACHE_LINE_COUNT/CACHE_WAY)
+    parameter CACHE_OFFSET_SIZE = 4;    // log2(CACHE_LINE_SIZE)
+    parameter CACHE_TAG_SIZE    = 10;   // CACHE_LINE_SIZE - CACHE_SET_SIZE - CACHE_OFFSET_SIZE
 
-    
-    reg [MEM_ADDR_SIZE-1:0] mem_address,
-    reg [CACHE_LINE_SIZE*8-1:0] mem_data,
-    reg [1:0] mem_command,
+    localparam  C1_NOP      = 3'd0;
+                C1_READ8    = 3'd1;
+                C1_READ16   = 3'd2;
+                C1_READ32   = 3'd3;
+                C1_INV_LINE = 3'd4;
+                C1_WRITE8   = 3'd5;
+                C1_WRITE16  = 3'd6;
+                C1_WRITE32  = 3'd7;
+
+    localparam	IDLE		= 3'd0,
+                READ        = 3'd1,
+                WRITE       = 3'd2,
+                READMM      = 3'd3,
+                WAITFORMM   = 3'd4,
+                UPDATEMM    = 3'd5,
+                UPDATECACHE = 3'd6;
+
+    reg [2:0] state;
 
     // STORAGE
     reg valid_array [CACHE_LINE_COUNT/CACHE_SET_SIZE-1:0][CACHE_SET_SIZE-1:0];
@@ -30,12 +49,59 @@ module cache (
     reg [CACHE_LINE_SIZE-1:0] mem_data_buff; // single line
     reg [2:0] mem_command_buff;
 
-    mem mem(
-        .clk(clk),
-        .address(mem_address),
-        .data(mem_data),
-        .command(mem_command),
-    );
+
+    always @(posedge clk) begin
+        case(state)
+            IDLE: begin
+                case (cpu_command)
+                    C1_NOP: begin
+                        
+                    end
+                    C1_READ8: begin
+                        
+                    end
+                    C1_READ16: begin
+                        
+                    end
+                    C1_READ32: begin
+                        
+                    end
+                    C1_INV_LINE: begin
+                        
+                    end
+                    C1_WRITE8: begin
+                        
+                    end
+                    C1_WRITE16: begin
+                        
+                    end
+                    C1_WRITE32: begin
+                        
+                    end
+                endcase
+            end
+            READ: begin
+                
+            end
+            WRITE: begin
+                
+            end
+            READMM: begin
+                
+            end
+            WAITFORMM: begin
+                
+            end
+            UPDATEMM: begin
+                
+            end
+            UPDATECACHE: begin
+                
+            end
+
+        endcase
+
+    end
 
     // CPU
     always @(posedge clk) begin
