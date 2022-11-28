@@ -65,8 +65,6 @@ module cache (
 
     // integer bitOfOp;
 
-
-
     reg clk;
     reg reset = 0;
 
@@ -87,25 +85,46 @@ module cache (
 
     initial begin
         $dumpfile("dump_cache.vcd"); 
-        $dumpvars;   
-
-        mem_address_buff = 15'b000000000000000;
-        mem_line_buff = 0;
-        mem_command_buff = C2_NOP;
+        $dumpvars;
 
         reset = 0;
         #1 reset = 1;
         #1 reset = 0;
         delay;
 
-        mem_command_buff = C2_READ;
-        delay;
 
-        for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
-            mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data_buff;
-            $display ("#%0d mem_line_buff = %b", i, mem_line_buff);
+        mem_address_buff = 15'b000000000000000;
+
+        repeat(32) begin
+            mem_line_buff = 0;
+            mem_command_buff = C2_NOP;
             delay;
+            mem_command_buff = C2_READ;
+            delay;
+            for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
+                mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data_buff;
+                delay;
+            end
+            $display ("%0d mem_line_buff = %b", mem_address_buff, mem_line_buff);
+            mem_address_buff += 1;
         end
+
+
+        // mem_address_buff = 15'd30;
+        // mem_line_buff = 0;
+        // mem_command_buff = C2_NOP;
+        // delay;
+
+        // mem_command_buff = C2_READ;
+        // delay;
+
+        // for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
+        //     mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data_buff;
+        //     delay;
+        // end
+
+        // $display ("mem_line_buff = %b", mem_line_buff);
+
 
         // $display("%b", mem_line_buff);
         $finish();

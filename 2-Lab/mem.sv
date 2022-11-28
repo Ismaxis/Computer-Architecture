@@ -18,41 +18,40 @@ module mem #(
                 C2_READ     = 3'd2,
                 C2_WRITE    = 3'd3;
 
-
-    reg [CACHE_OFFSET_SIZE*8-1:0] storage [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0];    // 2^19 8-bit word
-    reg [BUS_SIZE-1:0] data_buff;                                 // single bus
+    reg [CACHE_LINE_SIZE*8-1:0] storage [MEM_SIZE-1:0]; // 2^15 16-byte lines
+    reg [BUS_SIZE-1:0] data_buff; // single bus
     reg [2-1:0] command_buff;
+
+    reg [CACHE_OFFSET_SIZE-1:0] rwPosition; // ptr to next 2 bytes to read/write
+
+    integer SEED = 225526;
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            for (int i=0; i<32; i=i+1) begin
-                storage[i] = 0;
-            end
-            $display("formatted");
-            // Fill with 01010101....
-            for (int i=0; i<CACHE_OFFSET_SIZE; i=i+1) begin
-                storage[address][8*i +: 8] = (i % 2 == 0) ? 8'd0 : 8'd255;
+            for (int i = 0; i < MEM_SIZE; i=i+1) begin
+                storage[i] = i;//$random(SEED)>>16;
             end
             $display("filled");
 
-            $display("%b", storage[address]);
-
             data_buff = 0;
             command_buff = 0;
+            rwPosition = 0;
         end else begin
             command_buff = 0;
             if (command == C2_READ) begin
                 // READ
                 for (int i=0; i<CACHE_LINE_SIZE; i=i+1) begin
-                    data_buff[i] = storage[address][i];
+                    data_buff[i] = storage[address][rwPosition*8 + i];
                 end
-                command_buff = 1;
+                rwPosition += 2;
             end else if (command == C2_WRITE) begin
                 // WRITE
                 for (int i=0; i<CACHE_LINE_SIZE; i=i+1) begin
                     storage[address + (i << CACHE_OFFSET_SIZE)] = data[i];
                 end
                 command_buff = 1;
+            end else begin
+                rwPosition = 0;
             end
         end
     end
