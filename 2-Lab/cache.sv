@@ -54,17 +54,18 @@ module cache (
     // reg [CACHE_TAG_SIZE-1:0] tag_array [CACHE_SET_SIZE-1:0][CACHE_WAY-1:0];
     // reg [CACHE_LINE_SIZE*8-1:0] data_array [CACHE_SET_SIZE-1:0][CACHE_WAY-1:0]; // stores lines
 
-    // reg [MEM_ADDR_SIZE-1:0] cpu_address_buff,
-    // reg [CACHE_LINE_SIZE*8-1:0] cpu_data_buff; // single line
-    // reg [3-1:0] cpu_command_buff;
+    reg [MEM_ADDR_SIZE-1:0] cpu_address_buff;
+    reg [CACHE_LINE_SIZE*8-1:0] cpu_data_buff; // single line
+    reg [3-1:0] cpu_command_buff;
     
     reg [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] mem_address_buff;
     reg [CACHE_LINE_SIZE*8-1:0] mem_line_buff; // single line
     reg [BUS_SIZE-1:0] mem_data_buff;
     reg [2-1:0] mem_command_buff;
-
+    
+    reg [CACHE_OFFSET_SIZE-1:0] cpu_offset_buff;
     // integer bitOfOp;
-
+    
     reg clk;
     reg reset = 0;
 
@@ -86,47 +87,33 @@ module cache (
     initial begin
         $dumpfile("dump_cache.vcd"); 
         $dumpvars;
-
+        
+        // init
+        mem_line_buff = 0;
+        mem_command_buff = C2_NOP;
+        mem_address_buff = 15'b000000000000000;
+        // reset
         reset = 0;
         #1 reset = 1;
         #1 reset = 0;
         delay;
 
+        // set
+        cpu_address_buff = 19'b0000010010000010001;
+        cpu_offset_buff = cpu_address_buff[3:0];
+        mem_address_buff = cpu_address_buff >> CACHE_OFFSET_SIZE;
+        mem_command_buff = C2_READ;
+        delay;
 
-        mem_address_buff = 15'b000000000000000;
-
-        repeat(32) begin
-            mem_line_buff = 0;
-            mem_command_buff = C2_NOP;
+        // read
+        for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
+            mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data_buff;
             delay;
-            mem_command_buff = C2_READ;
-            delay;
-            for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
-                mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data_buff;
-                delay;
-            end
-            $display ("%0d mem_line_buff = %b", mem_address_buff, mem_line_buff);
-            mem_address_buff += 1;
         end
 
-
-        // mem_address_buff = 15'd30;
-        // mem_line_buff = 0;
-        // mem_command_buff = C2_NOP;
-        // delay;
-
-        // mem_command_buff = C2_READ;
-        // delay;
-
-        // for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
-        //     mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data_buff;
-        //     delay;
-        // end
-
-        // $display ("mem_line_buff = %b", mem_line_buff);
-
-
-        // $display("%b", mem_line_buff);
+        $display ("mem_line_buff = %b",mem_line_buff);
+        $display ("8 bit = %b", mem_line_buff[cpu_offset_buff*8 +: 8]);
+    
         $finish();
     end
 

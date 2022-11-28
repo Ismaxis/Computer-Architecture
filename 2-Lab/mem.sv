@@ -29,7 +29,7 @@ module mem #(
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             for (int i = 0; i < MEM_SIZE; i=i+1) begin
-                storage[i] = i;//$random(SEED)>>16;
+                storage[i] = $random(SEED)>>16;
             end
             $display("filled");
 
