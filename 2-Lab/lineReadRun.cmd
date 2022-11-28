@@ -1,0 +1,1 @@
+iverilog -g2012 -o ./out/cacheRead8.out .\cache.sv .\mem.sv && vvp .\out\cacheRead8.out

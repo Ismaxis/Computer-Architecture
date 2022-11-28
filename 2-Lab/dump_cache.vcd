@@ -1,0 +1,160 @@
+$date
+	Mon Nov 28 23:25:17 2022
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1s
+$end
+$scope module cache $end
+$var wire 15 ! mem_address [14:0] $end
+$var wire 2 " mem_command [1:0] $end
+$var wire 16 # mem_data [15:0] $end
+$var wire 16 $ mem_data_buff [15:0] $end
+$var reg 1 % clk $end
+$var reg 15 & mem_address_buff [14:0] $end
+$var reg 2 ' mem_command_buff [1:0] $end
+$var reg 128 ( mem_line_buff [127:0] $end
+$var reg 1 ) reset $end
+$scope module m1 $end
+$var wire 15 * address [14:0] $end
+$var wire 1 % clk $end
+$var wire 2 + command [1:0] $end
+$var wire 16 , data [15:0] $end
+$var wire 1 ) reset $end
+$var reg 2 - command_buff [1:0] $end
+$var reg 16 . data_buff [15:0] $end
+$scope begin $ivl_for_loop1 $end
+$var integer 32 / i [31:0] $end
+$upscope $end
+$scope begin $ivl_for_loop2 $end
+$var integer 32 0 i [31:0] $end
+$upscope $end
+$scope begin $ivl_for_loop3 $end
+$var integer 32 1 i [31:0] $end
+$upscope $end
+$scope begin $ivl_for_loop4 $end
+$var integer 32 2 i [31:0] $end
+$upscope $end
+$upscope $end
+$scope begin $ivl_for_loop0 $end
+$var integer 32 3 i [31:0] $end
+$upscope $end
+$scope task delay $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpvars
+b0 3
+b0 2
+b0 1
+b0 0
+b0 /
+bx .
+bx -
+bx ,
+b0 +
+b0 *
+0)
+b0 (
+b0 '
+b0 &
+0%
+bx $
+bz #
+bz "
+bz !
+$end
+#1
+b0 -
+b0 $
+b0 ,
+b0 .
+b100 0
+b100000 /
+1)
+1%
+#2
+0)
+0%
+#3
+1%
+#4
+b10 '
+b10 +
+0%
+#5
+b1 -
+b1111111100000000 $
+b1111111100000000 ,
+b1111111100000000 .
+b10000 1
+1%
+#6
+b1111111100000000 (
+0%
+#7
+b10000 1
+b1 -
+1%
+#8
+b11111111000000001111111100000000 (
+b1 3
+0%
+#9
+b10000 1
+b1 -
+1%
+#10
+b111111110000000011111111000000001111111100000000 (
+b10 3
+0%
+#11
+b10000 1
+b1 -
+1%
+#12
+b1111111100000000111111110000000011111111000000001111111100000000 (
+b11 3
+0%
+#13
+b10000 1
+b1 -
+1%
+#14
+b11111111000000001111111100000000111111110000000011111111000000001111111100000000 (
+b100 3
+0%
+#15
+b10000 1
+b1 -
+1%
+#16
+b111111110000000011111111000000001111111100000000111111110000000011111111000000001111111100000000 (
+b101 3
+0%
+#17
+b10000 1
+b1 -
+1%
+#18
+b1111111100000000111111110000000011111111000000001111111100000000111111110000000011111111000000001111111100000000 (
+b110 3
+0%
+#19
+b10000 1
+b1 -
+1%
+#20
+b11111111000000001111111100000000111111110000000011111111000000001111111100000000111111110000000011111111000000001111111100000000 (
+b111 3
+0%
+#21
+b10000 1
+b1 -
+1%
+#22
+b1000 3
+0%
