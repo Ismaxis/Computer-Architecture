@@ -5,12 +5,11 @@ module mem #(
     parameter CACHE_LINE_SIZE = 16
     ) (
     input clk,
-
+    input reset,
     input [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] address,
-    output [BUS_SIZE-1:0] data,
-    input [2-1:0] command,
-    input reset
-);
+    inout [BUS_SIZE-1:0] data,
+    input [2-1:0] command
+    );
     parameter MEM_SIZE = 1 << (MEM_ADDR_SIZE-CACHE_OFFSET_SIZE);   // 512KB = 2^9 * 2^10 = 2^19
 
     localparam  C2_NOP      = 3'd0,
@@ -28,8 +27,9 @@ module mem #(
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            for (int i = 0; i < MEM_SIZE; i=i+1) begin
+            for (int i = 0; i < 16; i=i+1) begin
                 storage[i] = $random(SEED)>>16;
+                $display("%d %b", i, storage[i]);
             end
             $display("filled");
 

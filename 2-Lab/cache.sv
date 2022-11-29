@@ -1,6 +1,11 @@
-module cache (
-    // input clk;
-
+module cache#(
+    parameter BUS_SIZE = 16,
+    parameter MEM_ADDR_SIZE = 10 + 9,   // log2(MEM_SIZE)
+    parameter CACHE_OFFSET_SIZE = 4,    // log2(CACHE_LINE_SIZE)
+    parameter CACHE_LINE_SIZE   = 16
+    ) (
+    input clk,
+    input reset,
     // inout [MEM_ADDR_SIZE-1:0] cpu_address,
     // inout [BUS_SIZE-1:0] cpu_data,
     // inout [3-1:0] cpu_command,
@@ -10,16 +15,11 @@ module cache (
     inout [2-1:0] mem_command
     );
 
-    // TEMP
-    parameter BUS_SIZE = 16;
-
-    parameter MEM_ADDR_SIZE = 10 + 9;          // log2(MEM_SIZE)
     parameter CACHE_WAY         = 2;
-    parameter CACHE_LINE_SIZE   = 16;
+
     parameter CACHE_LINE_COUNT  = 64;
     parameter CACHE_SIZE        = CACHE_LINE_COUNT * CACHE_LINE_SIZE;
-
-    parameter CACHE_OFFSET_SIZE = 4;    // log2(CACHE_LINE_SIZE)
+   
     parameter CACHE_SET_SIZE    = 5;    // log2(CACHE_LINE_COUNT/CACHE_WAY)
     parameter CACHE_TAG_SIZE    = 10;   // CACHE_LINE_SIZE - CACHE_SET_SIZE - CACHE_OFFSET_SIZE
 
@@ -55,29 +55,18 @@ module cache (
     // reg [CACHE_LINE_SIZE*8-1:0] data_array [CACHE_SET_SIZE-1:0][CACHE_WAY-1:0]; // stores lines
 
     reg [MEM_ADDR_SIZE-1:0] cpu_address_buff;
-    reg [CACHE_LINE_SIZE*8-1:0] cpu_data_buff; // single line
-    reg [3-1:0] cpu_command_buff;
+    reg [CACHE_OFFSET_SIZE-1:0] cpu_offset_buff;
+    // reg [CACHE_LINE_SIZE*8-1:0] cpu_data_buff; // single line
+    // reg [3-1:0] cpu_command_buff;
     
     reg [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] mem_address_buff;
     reg [CACHE_LINE_SIZE*8-1:0] mem_line_buff; // single line
     reg [BUS_SIZE-1:0] mem_data_buff;
     reg [2-1:0] mem_command_buff;
     
-    reg [CACHE_OFFSET_SIZE-1:0] cpu_offset_buff;
     // integer bitOfOp;
     
-    reg clk;
-    reg reset = 0;
 
-    mem #(MEM_ADDR_SIZE, CACHE_OFFSET_SIZE, BUS_SIZE, CACHE_LINE_SIZE) 
-    m1(clk, mem_address_buff, mem_data_buff, mem_command_buff, reset);
-
-	initial begin
-        clk = 1'd0;
-        forever
-            #1 clk = ~clk;
-    end
-    
     task delay;
         begin
             @(negedge clk);
@@ -92,14 +81,12 @@ module cache (
         mem_line_buff = 0;
         mem_command_buff = C2_NOP;
         mem_address_buff = 15'b000000000000000;
-        // reset
-        reset = 0;
-        #1 reset = 1;
-        #1 reset = 0;
+        delay;
+        delay;
         delay;
 
         // set
-        cpu_address_buff = 19'b0000010010000010001;
+        cpu_address_buff = 19'b0000000000001010001;
         cpu_offset_buff = cpu_address_buff[3:0];
         mem_address_buff = cpu_address_buff >> CACHE_OFFSET_SIZE;
         mem_command_buff = C2_READ;
@@ -107,15 +94,16 @@ module cache (
 
         // read
         for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
-            mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data_buff;
+            mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data;
             delay;
         end
 
         $display ("mem_line_buff = %b",mem_line_buff);
         $display ("8 bit = %b", mem_line_buff[cpu_offset_buff*8 +: 8]);
-    
         $finish();
     end
+    assign mem_command = mem_command_buff;
+    assign mem_address = mem_address_buff;
 
     // always @(posedge clk) begin
     //     case(state)
