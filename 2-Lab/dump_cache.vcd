@@ -1,5 +1,5 @@
 $date
-	Wed Nov 30 00:36:21 2022
+	Wed Nov 30 01:30:51 2022
 $end
 $version
 	Icarus Verilog
@@ -28,68 +28,76 @@ $var wire 15 . cpu_address [14:0] $end
 $var reg 3 / cpu_command_buff [2:0] $end
 $var reg 16 0 cpu_data_bus_buff [15:0] $end
 $var reg 4 1 cpu_offset_buff [3:0] $end
-$var reg 15 2 mem_address_buff [14:0] $end
-$var reg 2 3 mem_command_buff [1:0] $end
-$var reg 128 4 mem_line_buff [127:0] $end
+$var reg 5 2 cpu_set_buff [4:0] $end
+$var reg 10 3 cpu_tag_buff [9:0] $end
+$var reg 15 4 mem_address_buff [14:0] $end
+$var reg 2 5 mem_command_buff [1:0] $end
+$var reg 128 6 mem_line_buff [127:0] $end
 $scope begin $ivl_for_loop0 $end
-$var integer 32 5 i [31:0] $end
+$var integer 32 7 i [31:0] $end
+$upscope $end
+$scope begin $ivl_for_loop1 $end
+$var integer 32 8 i [31:0] $end
 $upscope $end
 $scope task delay $end
 $upscope $end
 $upscope $end
 $scope module cpu $end
 $var wire 1 ' clk $end
-$var wire 3 6 command [2:0] $end
-$var wire 16 7 data [15:0] $end
-$var wire 15 8 address [14:0] $end
-$var reg 19 9 cpu_address_buff [18:0] $end
-$var reg 3 : cpu_command_buff [2:0] $end
-$var reg 16 ; recieved_data [15:0] $end
+$var wire 3 9 command [2:0] $end
+$var wire 16 : data [15:0] $end
+$var wire 15 ; address [14:0] $end
+$var reg 19 < cpu_address_buff [18:0] $end
+$var reg 3 = cpu_command_buff [2:0] $end
+$var reg 16 > recieved_data [15:0] $end
 $scope task delay $end
 $upscope $end
 $upscope $end
 $scope module mem $end
-$var wire 15 < address [14:0] $end
+$var wire 15 ? address [14:0] $end
 $var wire 1 ' clk $end
-$var wire 2 = command [1:0] $end
-$var wire 16 > data [15:0] $end
+$var wire 2 @ command [1:0] $end
+$var wire 16 A data [15:0] $end
 $var wire 1 ( reset $end
-$var reg 2 ? command_buff [1:0] $end
-$var reg 16 @ data_buff [15:0] $end
-$var reg 4 A rwPosition [3:0] $end
-$var integer 32 B SEED [31:0] $end
-$scope begin $ivl_for_loop1 $end
-$var integer 32 C i [31:0] $end
-$upscope $end
+$var reg 2 B command_buff [1:0] $end
+$var reg 16 C data_buff [15:0] $end
+$var reg 4 D rwPosition [3:0] $end
+$var integer 32 E SEED [31:0] $end
 $scope begin $ivl_for_loop2 $end
-$var integer 32 D i [31:0] $end
+$var integer 32 F i [31:0] $end
 $upscope $end
 $scope begin $ivl_for_loop3 $end
-$var integer 32 E i [31:0] $end
+$var integer 32 G i [31:0] $end
+$upscope $end
+$scope begin $ivl_for_loop4 $end
+$var integer 32 H i [31:0] $end
 $upscope $end
 $upscope $end
 $upscope $end
 $enddefinitions $end
 #0
 $dumpvars
-b0 E
-b0 D
-b0 C
-b110111000011110110 B
+b0 H
+b0 G
+b0 F
+b110111000011110110 E
+bx D
+bx C
+bx B
 bx A
 bx @
 bx ?
-bx >
+b0 >
 bx =
 bx <
-b0 ;
-bx :
+bx ;
+b0 :
 bx 9
-bx 8
+b0 8
 b0 7
-bx 6
-b0 5
-b0 4
+b0 6
+bx 5
+bx 4
 bx 3
 bx 2
 bx 1
@@ -111,155 +119,194 @@ bx "
 bx !
 $end
 #1
-b0 A
-b0 ?
+b0 D
+b0 B
 b0 "
 b0 -
-b0 >
-b0 @
-b1000 C
-b10111101101100001001111000001110 B
+b0 A
+b0 C
+b1000 F
+b10111101101100001001111000001110 E
+b100000 7
 1(
 #2
 b11 &
 b11 .
-b11 8
-b11 9
+b11 ;
+b11 <
 b1 !
 b1 )
-b1 6
-b1 :
+b1 9
+b1 =
 0'
 0(
 #3
-1'
-#4
-b10 &
-b10 .
-b10 8
+b11 2
+b0 3
 b11 $
 b11 +
-b11 <
-b11 2
-b10 9
+b11 ?
+b11 4
+1'
+#4
+b0 &
+b0 .
+b0 ;
+b0 <
 0'
 #5
 1'
 #6
 b10 #
 b10 ,
-b10 =
-b10 3
-b10 1
+b10 @
+b10 5
+b0 1
 bz !
 bz )
-bz 6
-bz :
+bz 9
+bz =
 0'
 #7
-b10 A
+b10 D
 b1001010110111100 "
 b1001010110111100 -
-b1001010110111100 >
-b1001010110111100 @
-b10000 D
+b1001010110111100 A
+b1001010110111100 C
+b10000 G
 1'
 #8
-b1001010110111100 4
+b1001010110111100 6
 0'
 #9
-b100 A
+b100 D
 b1111111111111111 "
 b1111111111111111 -
-b1111111111111111 >
-b1111111111111111 @
-b10000 D
+b1111111111111111 A
+b1111111111111111 C
+b10000 G
 1'
 #10
-b11111111111111111001010110111100 4
-b1 5
+b11111111111111111001010110111100 6
+b1 8
 0'
 #11
-b110 A
-b10000 D
+b110 D
+b10000 G
 1'
 #12
-b111111111111111111111111111111111001010110111100 4
-b10 5
+b111111111111111111111111111111111001010110111100 6
+b10 8
 0'
 #13
-b1000 A
-b10000 D
+b1000 D
+b10000 G
 1'
 #14
-b1111111111111111111111111111111111111111111111111001010110111100 4
-b11 5
+b1111111111111111111111111111111111111111111111111001010110111100 6
+b11 8
 0'
 #15
-b1010 A
-b10000 D
+b1010 D
+b10000 G
 1'
 #16
-b11111111111111111111111111111111111111111111111111111111111111111001010110111100 4
-b100 5
+b11111111111111111111111111111111111111111111111111111111111111111001010110111100 6
+b100 8
 0'
 #17
-b1100 A
-b10000 D
+b1100 D
+b10000 G
 1'
 #18
-b111111111111111111111111111111111111111111111111111111111111111111111111111111111001010110111100 4
-b101 5
+b111111111111111111111111111111111111111111111111111111111111111111111111111111111001010110111100 6
+b101 8
 0'
 #19
-b1110 A
-b10000 D
+b1110 D
+b10000 G
 1'
 #20
-b1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111001010110111100 4
-b110 5
+b1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111001010110111100 6
+b110 8
 0'
 #21
-b0 A
+b0 D
 b0 "
 b0 -
-b0 >
-b0 @
-b10000 D
+b0 A
+b0 C
+b10000 G
 1'
 #22
-b111 5
+b111 8
 0'
 #23
-b10 A
+b10 D
 b1001010110111100 "
 b1001010110111100 -
-b1001010110111100 >
-b1001010110111100 @
-b10000 D
+b1001010110111100 A
+b1001010110111100 C
+b10000 G
 1'
 #24
 b111 !
 b111 )
-b111 6
+b111 9
 b111 /
-b11111111 %
-b11111111 *
-b11111111 7
-b11111111 0
+b10111100 %
+b10111100 *
+b10111100 :
+b10111100 0
 b0 #
 b0 ,
-b0 =
-b0 3
-b1000 5
+b0 @
+b0 5
+b1000 8
 0'
 #25
-b0 A
+b0 D
 1'
 #26
+b11 &
+b11 .
+b11 ;
+bz /
+b11 <
+b1 !
+b1 )
+b1 9
+b1 =
+b10111100 >
+0'
+#27
+1'
+#28
+b1 &
+b1 .
+b1 ;
+b1 <
+0'
+#29
+1'
+#30
+b111 /
+b10010101 %
+b10010101 *
+b10010101 :
+b10010101 0
+b1 1
+b111 !
+b111 )
+b111 9
+bz =
+0'
+#31
+1'
+#32
 bz !
 bz )
-bz 6
+bz 9
 bz /
-b11111111 ;
+b10010101 >
 0'
