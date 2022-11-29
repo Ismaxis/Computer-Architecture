@@ -10,7 +10,9 @@ module mem #(
     inout [BUS_SIZE-1:0] data,
     input [2-1:0] command
 );
-    parameter MEM_SIZE = 1 << (MEM_ADDR_SIZE-CACHE_OFFSET_SIZE);   // 512KB = 2^9 * 2^10 = 2^19
+
+    // 512KB = 2^9 * 2^10 = 2^19 = 2^15 lines * 2^4 bits in each line (16 8-bit words)
+    parameter MEM_SIZE = 1 << (MEM_ADDR_SIZE-CACHE_OFFSET_SIZE); // 2^15 cache lines
 
     localparam  C2_NOP      = 3'd0,
                 C2_RESPONSE = 3'd1,
@@ -25,13 +27,13 @@ module mem #(
 
     integer SEED = 225526;
 
+
+
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             for (int i = 0; i < 99; i=i+1) begin
                 storage[i] = $random(SEED)>>16;
-                // $display("%d %b", i, storage[i]);
             end
-
             $display("filled");
 
             data_buff = 'z;
@@ -59,6 +61,7 @@ module mem #(
             end
         end
     end
-    // assign command = command_buff;
+
     assign data = data_buff;
+
 endmodule

@@ -39,7 +39,6 @@ module cpu #(
 
     // Place for test calls
     initial begin
-        recieved_data = 0;
         delay;
         // READ1
         cpu_command_buff = C1_READ8;
@@ -113,7 +112,9 @@ module cpu #(
 
         $finish();
     end
+
     assign address = cpu_address_buff;
     assign data = data_to_write;
     assign command = cpu_command_buff;
+    
 endmodule
