@@ -3,7 +3,7 @@ module testbench ();
     parameter MEM_ADDR_SIZE = 10 + 9;   // log2(MEM_SIZE)
     parameter CACHE_OFFSET_SIZE = 4;    // log2(CACHE_LINE_SIZE)
     parameter CACHE_LINE_SIZE = 16;
-    wire [MEM_ADDR_SIZE-1:0] cpu_address;
+    wire [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] cpu_address;
     wire [BUS_SIZE-1:0] cpu_data;
     wire [3-1:0] cpu_command;
     wire [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] mem_address;
@@ -14,7 +14,7 @@ module testbench ();
     reg reset;
 
 
-    cpu #(MEM_ADDR_SIZE, BUS_SIZE) 
+    cpu #(MEM_ADDR_SIZE, BUS_SIZE, CACHE_OFFSET_SIZE) 
     cpu (clk, cpu_address, cpu_data, cpu_command);
 
     cache #(BUS_SIZE, MEM_ADDR_SIZE, CACHE_OFFSET_SIZE, CACHE_LINE_SIZE)

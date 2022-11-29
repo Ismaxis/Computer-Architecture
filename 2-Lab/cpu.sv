@@ -1,10 +1,11 @@
 module cpu #(
     parameter MEM_ADDR_SIZE = 10 + 9, 
-    parameter BUS_SIZE = 16 
+    parameter BUS_SIZE = 16,
+    parameter CACHE_OFFSET_SIZE = 4
     ) (
 
     input clk,
-    output [MEM_ADDR_SIZE-1:0] address,
+    output [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] address,
     inout [BUS_SIZE-1:0] data,
     inout [3-1:0] command
 );
@@ -33,11 +34,11 @@ module cpu #(
         delay;
 
         cpu_command_buff = C1_READ8;
-        cpu_address_buff = 19'b0000000000001010000;
+        cpu_address_buff = 15'b000000000000011;
+        delay;
+        cpu_address_buff = 15'b0010;
         delay;
         cpu_command_buff = C1_NOP;
-        delay;
-        delay;
         delay;
         delay;
         delay;

@@ -6,7 +6,7 @@ module cache#(
     ) (
     input clk,
     input reset,
-    input [MEM_ADDR_SIZE-1:0] cpu_address,
+    input [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] cpu_address,
     inout [BUS_SIZE-1:0] cpu_data,
     inout [3-1:0] cpu_command,
 
@@ -81,8 +81,9 @@ module cache#(
             $display("C1_READ");
             delay;
             // set
+            mem_address_buff = cpu_address;
+            delay;
             cpu_offset_buff = cpu_address[3:0];
-            mem_address_buff = cpu_address >> CACHE_OFFSET_SIZE;
             mem_command_buff = C2_READ;
             delay;
 
