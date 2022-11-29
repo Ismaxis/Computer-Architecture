@@ -27,14 +27,14 @@ module mem #(
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            for (int i = 0; i < 8; i=i+1) begin
+            for (int i = 0; i < 99; i=i+1) begin
                 storage[i] = $random(SEED)>>16;
-                $display("%d %b", i, storage[i]);
+                // $display("%d %b", i, storage[i]);
             end
 
             $display("filled");
 
-            data_buff = 0;
+            data_buff = 'z;
             command_buff = 0;
             rwPosition = 0;
         end else begin
@@ -46,13 +46,16 @@ module mem #(
                 end
                 rwPosition += 2;
             end else if (command == C2_WRITE) begin
-                // WRIjTE
+                // WRITE
+                // $display("before: %b", storage[address]);
                 for (int i=0; i<CACHE_LINE_SIZE; i=i+1) begin
-                    storage[address + (i << CACHE_OFFSET_SIZE)] = data[i];
+                    storage[address][rwPosition*8 + i] = data[i];
                 end
-                command_buff = 1;
+                // $display("after : %b", storage[address]);
+                rwPosition += 2;
             end else begin
                 rwPosition = 0;
+                data_buff = 'z;
             end
         end
     end

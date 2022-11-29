@@ -63,9 +63,11 @@ module cache#(
     
     reg [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] mem_address_buff;
     reg [CACHE_LINE_SIZE*8-1:0] mem_line_buff; // single line
-    // reg [BUS_SIZE-1:0] mem_data_buff;
+    reg [BUS_SIZE-1:0] mem_data_buff;
     reg [2-1:0] mem_command_buff;
     
+
+    reg need_to_write_to_MM;
 
     task delay;
         begin
@@ -75,8 +77,11 @@ module cache#(
 
     initial begin
         mem_line_buff = 0;
-        cpu_data_bus_buff = 0;
+        cpu_data_bus_buff = 'z;
         cpu_command_buff = 'z;
+        need_to_write_to_MM = 0;
+        mem_command_buff = 'z;
+        mem_data_buff = 'z;
     end
 
     always @(posedge clk or posedge reset) begin
@@ -103,12 +108,12 @@ module cache#(
             end
             cpu_offset_buff = cpu_address[3:0];
             if (tag_array[cpu_set_buff][0] == cpu_tag_buff) begin
-                $display("found0");
+                $display("found 0");
                 if (valid_array[cpu_set_buff][0] == 1) begin
                     cpu_data_bus_buff = data_array[cpu_set_buff][0][cpu_offset_buff*8 +: 8];
                 end
             end else if (tag_array[cpu_set_buff][1] == cpu_tag_buff) begin
-                $display("found1");
+                $display("found 1");
                 if (valid_array[cpu_set_buff][1] == 1) begin
                     cpu_data_bus_buff = data_array[cpu_set_buff][1][cpu_offset_buff*8 +: 8];
                 end
@@ -122,27 +127,43 @@ module cache#(
                     mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data;
                     delay;
                 end
+                $display("new data: %b", mem_line_buff);
+                $display("mem addr: %b", mem_address_buff);
+                // restore
                 mem_command_buff = C2_NOP;
                 // write in cache storage
                 if (valid_array[cpu_set_buff][0] == 0) begin
-                    $display("store to 0");
+                    $display("store 0");
                     data_array[cpu_set_buff][0] = mem_line_buff;
                     tag_array[cpu_set_buff][0] = cpu_tag_buff;
                     valid_array[cpu_set_buff][0] = 1;
                     dirty_array[cpu_set_buff][0] = 0;
                     last_used_array[cpu_set_buff] = 1; // opposite 
                 end else if (valid_array[cpu_set_buff][1] == 0) begin
-                    $display("store to 1");
+                    $display("store 1");
                     data_array[cpu_set_buff][1] = mem_line_buff;
                     tag_array[cpu_set_buff][1] = cpu_tag_buff;
                     valid_array[cpu_set_buff][1] = 1;
                     dirty_array[cpu_set_buff][1] = 0;
                     last_used_array[cpu_set_buff] = 0; // opposite 
                 end else begin
+                    // LRU
                     if (dirty_array[cpu_set_buff][last_used_array[cpu_set_buff]] == 1) begin
-                    $display("write to mm");
+                        $display("write to mm");
                         // write to MM
+                        need_to_write_to_MM = 1;
+                        mem_address_buff[CACHE_TAG_SIZE+CACHE_SET_SIZE-1:CACHE_SET_SIZE] = tag_array[cpu_set_buff][last_used_array[cpu_set_buff]];
+                        mem_address_buff[CACHE_SET_SIZE-1:0] = cpu_set_buff;
+                        // wait for 0
+                        while (need_to_write_to_MM !== 0) begin 
+                            delay;
+                        end
                     end
+                    data_array[cpu_set_buff][last_used_array[cpu_set_buff]] = mem_line_buff;
+                    tag_array[cpu_set_buff][last_used_array[cpu_set_buff]] = cpu_tag_buff;
+                    valid_array[cpu_set_buff][last_used_array[cpu_set_buff]] = 1;
+                    dirty_array[cpu_set_buff][last_used_array[cpu_set_buff]] = 0;
+                    last_used_array[cpu_set_buff] = ~last_used_array[cpu_set_buff];
                 end
                 cpu_data_bus_buff = mem_line_buff[cpu_offset_buff*8 +: 8];
             end
@@ -150,13 +171,59 @@ module cache#(
             cpu_command_buff = C1_WRITE32_RESP;
             delay;
             cpu_command_buff = 'z;
+            cpu_data_bus_buff = 'z;
 
         end else if (cpu_command == C1_WRITE8) begin
-            
+            $display("C1_WRITE8");
+
+            mem_address_buff = cpu_address;
+            cpu_tag_buff = cpu_address[CACHE_TAG_SIZE+CACHE_SET_SIZE-1:CACHE_SET_SIZE];
+            cpu_set_buff = cpu_address[CACHE_SET_SIZE-1:0];
+            while (mem_address_buff == cpu_address) begin 
+                delay;
+            end
+            cpu_offset_buff = cpu_address[3:0];
+            if (tag_array[cpu_set_buff][0] == cpu_tag_buff) begin
+                $display("found 0");
+                if (valid_array[cpu_set_buff][0] == 1) begin
+                    data_array[cpu_set_buff][0][cpu_offset_buff*8 +: 8] = cpu_data;
+                    dirty_array[cpu_set_buff][0] = 1;
+                end
+            end else if (tag_array[cpu_set_buff][1] == cpu_tag_buff) begin
+                $display("found 1");
+                if (valid_array[cpu_set_buff][1] == 1) begin
+                    data_array[cpu_set_buff][1][cpu_offset_buff*8 +: 8] = cpu_data;
+                    dirty_array[cpu_set_buff][1] = 1;
+                end
+            end
+
+            cpu_command_buff = C1_WRITE32_RESP;
+            delay;
+            cpu_command_buff = 'z;
         end
     end
-    assign mem_command = mem_command_buff;
+    always @(posedge clk) begin
+        if (need_to_write_to_MM) begin
+            $display("need_to_write_to_MM");
+            $display("mem addr to write: %b", mem_address_buff);
+            $display("write : %b", data_array[cpu_set_buff][last_used_array[cpu_set_buff]]);
+            // set
+            mem_command_buff = C2_WRITE;
+            delay;
+            // write
+            for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
+                mem_data_buff = data_array[cpu_set_buff][last_used_array[cpu_set_buff]][BUS_SIZE*i +: BUS_SIZE];
+                delay;
+            end
+            // restore
+            mem_command_buff = C2_NOP;
+            need_to_write_to_MM = 0;
+            mem_data_buff = 'z;
+        end
+    end
     assign mem_address = mem_address_buff;
+    assign mem_data = mem_data_buff;
+    assign mem_command = mem_command_buff;
     assign cpu_data = cpu_data_bus_buff;
     assign cpu_command = cpu_command_buff;
 
