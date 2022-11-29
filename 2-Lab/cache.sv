@@ -23,19 +23,19 @@ module cache#(
     parameter CACHE_SET_SIZE    = 5;    // log2(CACHE_LINE_COUNT/CACHE_WAY)
     parameter CACHE_TAG_SIZE    = 10;   // CACHE_LINE_SIZE - CACHE_SET_SIZE - CACHE_OFFSET_SIZE
 
-    localparam  C1_NOP      = 3'd0,
-                C1_READ8    = 3'd1,
-                C1_READ16   = 3'd2,
-                C1_READ32   = 3'd3,
-                C1_INV_LINE = 3'd4,
-                C1_WRITE8   = 3'd5,
-                C1_WRITE16  = 3'd6,
-                C1_WRITE32  = 3'd7;
+    localparam  C1_NOP          = 3'd0,
+                C1_READ8        = 3'd1,
+                C1_READ16       = 3'd2,
+                C1_READ32       = 3'd3,
+                C1_INV_LINE     = 3'd4,
+                C1_WRITE8       = 3'd5,
+                C1_WRITE16      = 3'd6,
+                C1_WRITE32_RESP = 3'd7;
 
-    localparam  C2_NOP      = 2'd0,
-                C2_RESPONSE = 2'd1,
-                C2_READ     = 2'd2,
-                C2_WRITE    = 2'd3;
+    localparam  C2_NOP          = 2'd0,
+                C2_RESPONSE     = 2'd1,
+                C2_READ         = 2'd2,
+                C2_WRITE        = 2'd3;
 
     // localparam  IDLE        = 3'd0,
     //             READ        = 3'd1,
@@ -57,7 +57,7 @@ module cache#(
     reg [MEM_ADDR_SIZE-1:0] cpu_address_buff;
     reg [CACHE_OFFSET_SIZE-1:0] cpu_offset_buff;
     reg [BUS_SIZE-1:0] cpu_data_bus_buff; // single bus
-    // reg [3-1:0] cpu_command_buff;
+    reg [3-1:0] cpu_command_buff;
     
     reg [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] mem_address_buff;
     reg [CACHE_LINE_SIZE*8-1:0] mem_line_buff; // single line
@@ -74,11 +74,12 @@ module cache#(
     initial begin
         mem_line_buff = 0;
         cpu_data_bus_buff = 0;
+        cpu_command_buff = 'z;
     end
 
     always @(posedge clk) begin
         if (cpu_command == C1_READ8) begin
-            $display("C1_READ");
+            $display("C1_READ8");
             delay;
             // set
             mem_address_buff = cpu_address;
@@ -96,13 +97,15 @@ module cache#(
             mem_command_buff = C2_NOP;
 
             cpu_data_bus_buff = mem_line_buff[cpu_offset_buff*8 +: 8];
-            // $display ("mem_line_bu %b",mem_line_buff);
-            // $display ("8 bit = %b", mem_line_buff[cpu_offset_buff*8 +: 8]);
+            cpu_command_buff = C1_WRITE32_RESP;
+            delay;
+            cpu_command_buff = 'z;
         end
     end
     assign mem_command = mem_command_buff;
     assign mem_address = mem_address_buff;
     assign cpu_data = cpu_data_bus_buff;
+    assign cpu_command = cpu_command_buff;
 
     // always @(posedge clk) begin
     //     case(state)

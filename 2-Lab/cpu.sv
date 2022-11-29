@@ -10,14 +10,14 @@ module cpu #(
     inout [3-1:0] command
 );
 
-    localparam  C1_NOP      = 3'd0,
-                C1_READ8    = 3'd1,
-                C1_READ16   = 3'd2,
-                C1_READ32   = 3'd3,
-                C1_INV_LINE = 3'd4,
-                C1_WRITE8   = 3'd5,
-                C1_WRITE16  = 3'd6,
-                C1_WRITE32  = 3'd7;
+    localparam  C1_NOP          = 3'd0,
+                C1_READ8        = 3'd1,
+                C1_READ16       = 3'd2,
+                C1_READ32       = 3'd3,
+                C1_INV_LINE     = 3'd4,
+                C1_WRITE8       = 3'd5,
+                C1_WRITE16      = 3'd6,
+                C1_WRITE32_RESP = 3'd7;
 
     task delay;
         begin
@@ -32,23 +32,18 @@ module cpu #(
     initial begin
         recieved_data = 0;
         delay;
-
+        // READ
         cpu_command_buff = C1_READ8;
         cpu_address_buff = 15'b000000000000011;
         delay;
         cpu_address_buff = 15'b0010;
         delay;
-        cpu_command_buff = C1_NOP;
+        cpu_command_buff = 'z;
         delay;
-        delay;
-        delay;
-        delay;
-        delay;
-        delay;
-        delay;
-        delay;
-        delay;
-        delay;
+
+        while (command !== C1_WRITE32_RESP) begin 
+            delay;
+        end
         recieved_data = data;
         $display("recieved: %b", recieved_data);
         $finish();
