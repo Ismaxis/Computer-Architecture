@@ -20,9 +20,11 @@ module cpu #(
                 C1_WRITE32_RESP = 3'd7;
     
     reg [MEM_ADDR_SIZE-1:0] cpu_address_buff;
+    reg [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] address_bus_buff;
     reg [BUS_SIZE-1:0] data_to_write;
     reg [3-1:0] cpu_command_buff;
     reg [BUS_SIZE-1:0] recieved_data;
+
 
     task delay;
         begin
@@ -30,8 +32,52 @@ module cpu #(
         end
     endtask	
     
+    task send_address;
+        address_bus_buff = cpu_address_buff[MEM_ADDR_SIZE-1:CACHE_OFFSET_SIZE];
+        delay;
+        address_bus_buff = cpu_address_buff[CACHE_OFFSET_SIZE-1:0];
+        delay;
+    endtask
+
+    task wait_for_resp;
+        while (command !== C1_WRITE32_RESP) begin 
+            delay;
+        end
+    endtask
+
+    task READ8;
+        cpu_command_buff = C1_READ8;
+        READ;
+    endtask
+    task READ16;
+        cpu_command_buff = C1_READ16;
+        READ;
+    endtask
+
+    task READ;
+        send_address;
+        cpu_command_buff = 'z;
+        wait_for_resp;
+        recieved_data = data;
+    endtask
+
+    task WRITE8;
+        cpu_command_buff = C1_WRITE8;
+        WRITE;
+    endtask
+    task WRITE16;
+        cpu_command_buff = C1_WRITE16;
+        WRITE;
+    endtask
+
+    task WRITE;
+        send_address;
+        cpu_command_buff = 'z;
+        wait_for_resp;
+        data_to_write = 'z;
+    endtask
     initial begin
-        cpu_address_buff = 'x;
+        address_bus_buff = 'z;
         cpu_command_buff = 'z;
         recieved_data = 0;
         data_to_write = 'z;
@@ -40,74 +86,61 @@ module cpu #(
     // Place for test calls
     initial begin
         delay;
-        // READ1
-        cpu_command_buff = C1_READ8;
-        cpu_address_buff = 15'b0000000000_00010;
-        delay;
-        cpu_address_buff = 15'b0000;
-        delay;
-        cpu_command_buff = 'z;
-        delay;
-        while (command !== C1_WRITE32_RESP) begin 
-            delay;
-        end
-        recieved_data = data;
+
+        cpu_address_buff = 19'b0000000000_00010_0000;
+        READ8;
         $display("recieved: %b", recieved_data);
-        
-        // WRITE1
-        cpu_command_buff = C1_WRITE8;
-        cpu_address_buff = 15'b0000000000_00010;
+
+        cpu_address_buff = 19'b0000000000_00010_0000;
         data_to_write = 16'b0101010101010101;
+        WRITE16;
+        $display("writen");
         delay;
-        cpu_address_buff = 15'b0000;
-        delay;
-        cpu_command_buff = 'z;
-        delay;
-        while (command !== C1_WRITE32_RESP) begin 
-            delay;
-        end
-        data_to_write = 'z;
-        
-        // READ2
-        cpu_command_buff = C1_READ16;
-        cpu_address_buff = 15'b0000000000_00010;
-        delay;
-        cpu_address_buff = 15'b0000;
-        delay;
-        cpu_command_buff = 'z;
-        delay;
-        while (command !== C1_WRITE32_RESP) begin 
-            delay;
-        end
-        recieved_data = data;
+        cpu_address_buff = 19'b0000000000_00010_0000;
+        READ16;
         $display("recieved: %b", recieved_data);
-        // WRITE1
-        cpu_command_buff = C1_WRITE16;
-        cpu_address_buff = 15'b0000000000_00010;
-        data_to_write = 16'b0101010101010101;
-        delay;
-        cpu_address_buff = 15'b0000;
-        delay;
-        cpu_command_buff = 'z;
-        delay;
-        while (command !== C1_WRITE32_RESP) begin 
-            delay;
-        end
-        data_to_write = 'z;
         
-        // READ2
-        cpu_command_buff = C1_READ16;
-        cpu_address_buff = 15'b0000000000_00010;
-        delay;
-        cpu_address_buff = 15'b0000;
-        delay;
-        cpu_command_buff = 'z;
-        delay;
-        while (command !== C1_WRITE32_RESP) begin 
-            delay;
-        end
-        recieved_data = data;
-        $display("recieved: %b", recieved_data);
+        // // READ2
+        // cpu_command_buff = C1_READ16;
+        // cpu_address_buff = 15'b0000000000_00010;
+        // delay;
+        // cpu_address_buff = 15'b0000;
+        // delay;
+        // cpu_command_buff = 'z;
+        // delay;
+        // while (command !== C1_WRITE32_RESP) begin 
+        //     delay;
+        // end
+        // recieved_data = data;
+        // $display("recieved: %b", recieved_data);
+
+        // // WRITE2
+        // cpu_command_buff = C1_WRITE16;
+        // cpu_address_buff = 15'b0000000000_00010;
+        // data_to_write = 16'b1010101010101010;
+        // delay;
+        // cpu_address_buff = 15'b0000;
+        // delay;
+        // cpu_command_buff = 'z;
+        // delay;
+        // while (command !== C1_WRITE32_RESP) begin 
+        //     delay;
+        // end
+        // data_to_write = 'z;
+        
+        // // READ3
+        // cpu_command_buff = C1_READ16;
+        // cpu_address_buff = 15'b0000000000_00010;
+        // delay;
+        // cpu_address_buff = 15'b0000;
+        // delay;
+        // cpu_command_buff = 'z;
+        // delay;
+        // while (command !== C1_WRITE32_RESP) begin 
+        //     delay;
+        // end
+        // recieved_data = data;
+        // $display("recieved: %b", recieved_data);
         
         // READ3
         // cpu_command_buff = C1_READ32;
@@ -140,7 +173,7 @@ module cpu #(
         $finish();
     end
 
-    assign address = cpu_address_buff;
+    assign address = address_bus_buff;
     assign data = data_to_write;
     assign command = cpu_command_buff;
     

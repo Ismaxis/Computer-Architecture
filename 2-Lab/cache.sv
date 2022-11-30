@@ -134,8 +134,7 @@ module cache#(
                 data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 16] = cpu_data;
                 dirty_array[cpu_set_buff][index_in_set] = 1;
             end
-        endcase
-    endtask
+        endcase    endtask
 
     initial begin
         mem_line_buff     =  0;
@@ -187,8 +186,8 @@ module cache#(
                     mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data;
                     delay;
                 end
-                $display("new data: %b", mem_line_buff);
-                $display("mem addr: %b", mem_address_buff);
+                // $display("new data: %b", mem_line_buff);
+                // $display("mem addr: %b", mem_address_buff);
 
                 // restore
                 mem_command_buff = C2_NOP;
@@ -237,11 +236,10 @@ module cache#(
             end else if (tag_array[cpu_set_buff][1] == cpu_tag_buff) begin
                 if (valid_array[cpu_set_buff][1] == 1) begin
                     $display("found 1");
-                    index_in_set = 0;
+                    index_in_set = 1;
                     write_to_storage;
                 end
             end
-
             cpu_command_buff = C1_WRITE32_RESP;
             delay;
             cpu_command_buff = 'z;
