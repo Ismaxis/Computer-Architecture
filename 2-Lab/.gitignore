@@ -1,7 +1,5 @@
 /itmo-comp-arch22-lab2-Ismaxis
 /iverilog
 /HelloWorld
-/WaveTrace
-/firstTry
 dump_cache_old.vcd
 dump_cache_optimized_write_MM.vcd
