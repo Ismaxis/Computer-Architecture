@@ -21,7 +21,8 @@ module cpu #(
     
     reg [MEM_ADDR_SIZE-1:0] cpu_address_buff;
     reg [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] address_bus_buff;
-    reg [BUS_SIZE-1:0] data_to_write;
+    reg [BUS_SIZE*2-1:0] data_to_write; 
+    reg [BUS_SIZE-1:0] data_buff;
     reg [3-1:0] cpu_command_buff;
     reg [BUS_SIZE-1:0] recieved_data;
     reg [BUS_SIZE*2-1:0] local_storage;
@@ -79,19 +80,35 @@ module cpu #(
         cpu_command_buff = C1_WRITE16;
         WRITE;
     endtask
+    task WRITE32;
+        cpu_command_buff = C1_WRITE32_RESP;
+
+        data_buff = data_to_write[BUS_SIZE-1:0];
+        address_bus_buff = cpu_address_buff[MEM_ADDR_SIZE-1:CACHE_OFFSET_SIZE];
+        delay;
+
+        data_buff = data_to_write[BUS_SIZE*2-1:BUS_SIZE];
+        address_bus_buff = cpu_address_buff[CACHE_OFFSET_SIZE-1:0];
+        delay;
+
+        cpu_command_buff = 'z;
+        wait_for_resp;
+        data_buff = 'z;
+    endtask
 
     task WRITE;
+        data_buff = data_to_write;
         send_address;
         cpu_command_buff = 'z;
         wait_for_resp;
-        data_to_write = 'z;
+        data_buff = 'z;
     endtask
 
     initial begin
         address_bus_buff = 'z;
         cpu_command_buff = 'z;
         recieved_data = 0;
-        data_to_write = 'z;
+        data_buff = 'z;
     end
 
     // Place for test calls
@@ -99,35 +116,35 @@ module cpu #(
         delay;
         $display("----------------");
 
-        cpu_address_buff = 19'b0000000000_00010_0010;
-        data_to_write = 16'b0101010101010101;
+        cpu_address_buff = 19'b0000000000_01010_0000;
+        $display("read from %b", cpu_address_buff);
+        READ32;
+        $display("data      %b", local_storage);
+        $display("----------------");
+
+        cpu_address_buff = 19'b0000000000_01010_0000;
+        data_to_write = 32'b0101_0101_0101_0101_0101_0101_0101_0101;
         $display("write to  %b", cpu_address_buff);
         $display("data      %b", data_to_write);
-        WRITE16;
+        WRITE32;
         $display("----------------");
        
-        cpu_address_buff = 19'b0000000000_00010_0000;
+        cpu_address_buff = 19'b0000000000_01010_0000;
         $display("read from %b", cpu_address_buff);
         READ32;
         $display("data      %b", local_storage);
         $display("----------------");
 
-        cpu_address_buff = 19'b0000000000_00010_0000;
-        data_to_write = 16'b0101010101010101;
+        cpu_address_buff = 19'b0000000000_01010_0000;
+        data_to_write = 32'b1111_1111_1111_1111_0000_0000_0000_0000;
         $display("write to  %b", cpu_address_buff);
         $display("data      %b", data_to_write);
-        WRITE16;
+        WRITE32;
         $display("----------------");
         
-        cpu_address_buff = 19'b0000000000_00010_0000;
+        cpu_address_buff = 19'b0000000000_01010_0000;
         $display("read from %b", cpu_address_buff);
         READ32;
-        $display("data      %b", local_storage);
-        $display("----------------");
-
-        cpu_address_buff = 19'b0000000000_00010_0010;
-        $display("read from %b", cpu_address_buff);
-        READ8;
         $display("data      %b", local_storage);
         $display("----------------");
 
@@ -135,7 +152,7 @@ module cpu #(
     end
 
     assign address = address_bus_buff;
-    assign data = data_to_write;
+    assign data = data_buff;
     assign command = cpu_command_buff;
     
 endmodule

@@ -231,12 +231,15 @@ module cache#(
             cpu_data_bus_buff = 'z;
             cur_cpu_command = 'z;
 
-        end else if (cpu_command == C1_WRITE8 || cpu_command == C1_WRITE16) begin
+        end else if (cpu_command == C1_WRITE8 || cpu_command == C1_WRITE16 || cpu_command == C1_WRITE32_RESP) begin
             // $display("C1_WRITEX");
             cur_cpu_command = cpu_command;
             cpu_data_to_write[0 +: BUS_SIZE] = cpu_data;
             read_cpu_address;
-            cpu_data_to_write[BUS_SIZE +: BUS_SIZE] = cpu_data;
+            if (cpu_command == C1_WRITE32_RESP) begin
+                cpu_data_to_write[BUS_SIZE +: BUS_SIZE] = cpu_data;
+                $display("data %b", cpu_data_to_write);
+            end
 
             if (tag_array[cpu_set_buff][0] == cpu_tag_buff) begin
                 if (valid_array[cpu_set_buff][0] == 1) begin
