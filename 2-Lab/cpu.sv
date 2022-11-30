@@ -39,7 +39,6 @@ module cpu #(
         address_bus_buff = cpu_address_buff[CACHE_OFFSET_SIZE-1:0];
         delay;
     endtask
-
     task wait_for_resp;
         while (command !== C1_WRITE32_RESP) begin 
             delay;
@@ -62,9 +61,7 @@ module cpu #(
         local_storage[BUS_SIZE-1:0] = recieved_data;
         READ;
         local_storage[BUS_SIZE*2-1:BUS_SIZE] = recieved_data;
-        
     endtask
-
     task READ;
         send_address;
         cpu_command_buff = 'z;
@@ -95,13 +92,19 @@ module cpu #(
         wait_for_resp;
         data_buff = 'z;
     endtask
-
     task WRITE;
         data_buff = data_to_write;
         send_address;
         cpu_command_buff = 'z;
         wait_for_resp;
         data_buff = 'z;
+    endtask
+
+    task INV;
+        cpu_command_buff = C1_INV_LINE;
+        send_address;
+        cpu_command_buff = 'z;
+        wait_for_resp;
     endtask
 
     initial begin
@@ -245,10 +248,49 @@ module cpu #(
         $display("----------------\n");
     endtask
 
+    task invalidate_test; 
+        $display("\n#############################################");
+        $display("#############  INVALIDATE TEST  #############");
+        $display("#############################################\n");
+
+        $display("----------------");
+        cpu_address_buff = 19'b0000000000_10001_0000;
+        $display("read from %b", cpu_address_buff);
+        READ32;
+        $display("data      %b", local_storage);
+        $display("----------------");
+
+        cpu_address_buff = 19'b0000000000_10001_0000;
+        data_to_write = 32'b0101_0101_0101_0101_0101_0101_0101_0101;
+        $display("write to  %b", cpu_address_buff);
+        $display("data      %b", data_to_write);
+        WRITE32;
+        $display("----------------");
+
+        cpu_address_buff = 19'b0000000000_10001_0000;
+        $display("read from %b", cpu_address_buff);
+        READ32;
+        $display("data      %b", local_storage);
+        $display("----------------");
+        
+        cpu_address_buff = 19'b0000000000_10001_0000;
+        $display("inv_line  %b", cpu_address_buff);
+        INV;
+        $display("----------------");
+
+        cpu_address_buff = 19'b0000000000_10001_0000;
+        $display("read from %b", cpu_address_buff);
+        READ32;
+        $display("data      %b", local_storage);
+        $display("----------------");
+    endtask
+
     // Place for test calls
     initial begin
         delay;
         
+        invalidate_test;
+
         read_write_test;
 
         eviction_test;

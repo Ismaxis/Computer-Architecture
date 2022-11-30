@@ -18,11 +18,11 @@ module cache#(
     parameter CACHE_WAY         = 2;
 
     parameter CACHE_LINE_COUNT  = 64;
-    parameter CACHE_SETS_COUNT  = CACHE_LINE_COUNT/CACHE_WAY; 
+    parameter CACHE_SET_SIZE    = $clog2(CACHE_SETS_COUNT);
+    parameter CACHE_TAG_SIZE    = CACHE_LINE_SIZE - CACHE_SET_SIZE - CACHE_OFFSET_SIZE;
     parameter CACHE_SIZE        = CACHE_LINE_COUNT * CACHE_LINE_SIZE;
-   
-    parameter CACHE_SET_SIZE    = 5;    // log2(CACHE_SETS_COUNT)
-    parameter CACHE_TAG_SIZE    = 10;   // CACHE_LINE_SIZE - CACHE_SET_SIZE - CACHE_OFFSET_SIZE
+    parameter CACHE_SETS_COUNT  = CACHE_LINE_COUNT/CACHE_WAY; 
+
     localparam  C1_NOP          = 3'd0,
                 C1_READ8        = 3'd1,
                 C1_READ16       = 3'd2,
@@ -31,7 +31,7 @@ module cache#(
                 C1_WRITE8       = 3'd5,
                 C1_WRITE16      = 3'd6,
                 C1_WRITE32_RESP = 3'd7;
-
+                
     localparam  C2_NOP          = 2'd0,
                 C2_RESPONSE     = 2'd1,
                 C2_READ         = 2'd2,
@@ -185,21 +185,16 @@ module cache#(
         end 
         if (cpu_command == C1_READ8 || cpu_command == C1_READ16 || cpu_command == C1_READ32) begin
             // $display("C1_READX");
+            $display("valid : %b, %b", valid_array[cpu_set_buff][0], valid_array[cpu_set_buff][1]);
             cur_cpu_command = cpu_command;
             read_cpu_address;
 
-            if (tag_array[cpu_set_buff][0] == cpu_tag_buff) begin
-                if (valid_array[cpu_set_buff][0] == 1) begin
-                    // $display("found 0");
-                    index_in_set = 0;
-                    read_from_storage;
-                end
-            end else if (tag_array[cpu_set_buff][1] == cpu_tag_buff) begin
-                if (valid_array[cpu_set_buff][1] == 1) begin
-                    // $display("found 1");
-                    index_in_set = 1;
-                    read_from_storage;
-                end
+            if (valid_array[cpu_set_buff][0] == 1 && tag_array[cpu_set_buff][0] == cpu_tag_buff) begin
+                index_in_set = 0;
+                read_from_storage;
+            end else if (valid_array[cpu_set_buff][1] == 1 && tag_array[cpu_set_buff][1] == cpu_tag_buff) begin
+                index_in_set = 1;
+                read_from_storage;
             end else begin
                 replace_from_MM;
                 read_from_storage;
@@ -221,7 +216,7 @@ module cache#(
 
         end else if (cpu_command == C1_WRITE8 || cpu_command == C1_WRITE16 || cpu_command == C1_WRITE32_RESP) begin
             // $display("C1_WRITEX");
-            // $display("dirty: %b %b", dirty_array[cpu_set_buff][0], dirty_array[cpu_set_buff][1]);
+            $display("valid : %b, %b", valid_array[cpu_set_buff][0], valid_array[cpu_set_buff][1]);
             cur_cpu_command = cpu_command;
             cpu_data_to_write[0 +: BUS_SIZE] = cpu_data;
             read_cpu_address;
@@ -245,11 +240,25 @@ module cache#(
                 replace_from_MM;
                 write_to_storage;
             end
-            // $display("dirty: %b %b", dirty_array[cpu_set_buff][0], dirty_array[cpu_set_buff][1]);
             cpu_command_buff = C1_WRITE32_RESP;
             delay;
             cpu_command_buff = 'z;
-            cur_cpu_command = 'z;
+            cur_cpu_command  = 'z;
+        end else if (cpu_command == C1_INV_LINE) begin
+            read_cpu_address;
+            $display("valid : %b, %b", valid_array[cpu_set_buff][0], valid_array[cpu_set_buff][1]);
+            if (tag_array[cpu_set_buff][0] == cpu_tag_buff) begin
+                valid_array[cpu_set_buff][0] = 0;
+            end else if (tag_array[cpu_set_buff][1] == cpu_tag_buff) begin
+                valid_array[cpu_set_buff][1] = 0;
+            end
+
+            $display("valid : %b, %b", valid_array[cpu_set_buff][0], valid_array[cpu_set_buff][1]);
+
+            cpu_command_buff = C1_WRITE32_RESP;
+            delay;
+            cpu_command_buff = 'z;
+            cur_cpu_command  = 'z;
         end
     end
 
