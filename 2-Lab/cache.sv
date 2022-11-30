@@ -59,6 +59,7 @@ module cache#(
     reg [CACHE_SET_SIZE-1:0] cpu_set_buff;
     reg [CACHE_OFFSET_SIZE-1:0] cpu_offset_buff;
     reg [BUS_SIZE-1:0] cpu_data_bus_buff; // single bus
+    reg [BUS_SIZE*2-1:0] cpu_data_to_write;
     reg [3-1:0] cpu_command_buff;
     
     reg [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] mem_address_buff;
@@ -72,10 +73,48 @@ module cache#(
         end
     endtask	
 
+    task replace_from_MM;
+        // $display("replace_from_MM");
+        // set
+        mem_command_buff = C2_READ;
+        delay;
+
+        // read
+        for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
+            mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data;
+            delay;
+        end
+
+        // restore
+        mem_command_buff = C2_NOP;
+        
+        // try to write in cache storage
+        if (valid_array[cpu_set_buff][0] == 0) begin
+            index_in_set = 0;
+            // $display("store 0");
+            store;
+        end else if (valid_array[cpu_set_buff][1] == 0) begin
+            index_in_set = 1;
+            // $display("store 1");
+            store;
+        end else begin // evict
+            // LRU
+            if (dirty_array[cpu_set_buff][last_used_array[cpu_set_buff]] == 1) begin
+                // $display("write to mm");
+                mem_address_buff[CACHE_TAG_SIZE+CACHE_SET_SIZE-1:CACHE_SET_SIZE] = tag_array[cpu_set_buff][last_used_array[cpu_set_buff]];
+                mem_address_buff[CACHE_SET_SIZE-1:0] = cpu_set_buff;
+                write_to_MM;
+            end
+            
+            index_in_set = last_used_array[cpu_set_buff];
+            store;
+        end
+    endtask 
+
     task write_to_MM;
-        $display("need_to_write_to_MM");
-        $display("mem addr to write: %b", mem_address_buff);
-        $display("write : %b", data_array[cpu_set_buff][last_used_array[cpu_set_buff]]);
+        // $display("write_to_MM");
+        // $display("mem addr to write: %b", mem_address_buff);
+        // $display("write : %b", data_array[cpu_set_buff][last_used_array[cpu_set_buff]]);
         // set
         mem_command_buff = C2_WRITE;
         delay;
@@ -93,6 +132,10 @@ module cache#(
     task store;
         data_array[cpu_set_buff][index_in_set] = mem_line_buff;
         tag_array[cpu_set_buff][index_in_set] = cpu_tag_buff;
+        update_flags;
+    endtask
+
+    task update_flags;
         valid_array[cpu_set_buff][index_in_set] = 1;
         dirty_array[cpu_set_buff][index_in_set] = 0;
         last_used_array[cpu_set_buff] = ~index_in_set; // opposite 
@@ -103,38 +146,32 @@ module cache#(
         cpu_tag_buff = cpu_address[CACHE_TAG_SIZE+CACHE_SET_SIZE-1:CACHE_SET_SIZE];
         cpu_set_buff = cpu_address[CACHE_SET_SIZE-1:0];
 
-        while (mem_address_buff == cpu_address) begin 
-            delay;
-        end
+        delay;
+        
         cpu_offset_buff = cpu_address[3:0];
     endtask
 
     reg [3-1:0] cur_cpu_command;
     task read_from_storage;
-        case (cur_cpu_command)
-            C1_READ8 : begin
-                cpu_data_bus_buff = data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 8];
-            end
-            C1_READ16 : begin
-                cpu_data_bus_buff = data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 16];
-            end
-            C1_READ32 : begin
-                $display("C1_READ32!!!");
-            end
-        endcase
+        if (cur_cpu_command == C1_READ8) begin
+            cpu_data_bus_buff = data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 8];
+        end else if (cur_cpu_command == C1_READ16 || cur_cpu_command == C1_READ32) begin
+            cpu_data_bus_buff = data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 16];
+        end
     endtask 
 
     task write_to_storage;
-        case (cur_cpu_command)
-            C1_WRITE8 : begin
-                data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 8] = cpu_data;
-                dirty_array[cpu_set_buff][index_in_set] = 1;
-            end
-            C1_WRITE16 : begin
-                data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 16] = cpu_data;
-                dirty_array[cpu_set_buff][index_in_set] = 1;
-            end
-        endcase    endtask
+        if (cur_cpu_command == C1_WRITE8) begin
+            data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 8] = cpu_data_to_write;
+            update_flags;
+        end else if (cur_cpu_command == C1_WRITE16) begin
+            data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 16] = cpu_data_to_write;
+            update_flags;
+        end else if (cur_cpu_command == C1_WRITE32_RESP) begin
+            data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 32] = cpu_data_to_write;
+            update_flags;
+        end
+    endtask
 
     initial begin
         mem_line_buff     =  0;
@@ -159,86 +196,63 @@ module cache#(
             end
         end 
         if (cpu_command == C1_READ8 || cpu_command == C1_READ16 || cpu_command == C1_READ32) begin
-            $display("C1_READX");
+            // $display("C1_READX");
             cur_cpu_command = cpu_command;
             read_cpu_address;
 
             if (tag_array[cpu_set_buff][0] == cpu_tag_buff) begin
                 if (valid_array[cpu_set_buff][0] == 1) begin
-                    $display("found 0");
+                    // $display("found 0");
                     index_in_set = 0;
                     read_from_storage;
                 end
             end else if (tag_array[cpu_set_buff][1] == cpu_tag_buff) begin
                 if (valid_array[cpu_set_buff][1] == 1) begin
-                    $display("found 1");
+                    // $display("found 1");
                     index_in_set = 1;
                     read_from_storage;
                 end
-            end else begin 
-                $display("GO TO MM");
-                // set
-                mem_command_buff = C2_READ;
-                delay;
-
-                // read
-                for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
-                    mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data;
-                    delay;
-                end
-                // $display("new data: %b", mem_line_buff);
-                // $display("mem addr: %b", mem_address_buff);
-
-                // restore
-                mem_command_buff = C2_NOP;
-                
-                // try to write in cache storage
-                if (valid_array[cpu_set_buff][0] == 0) begin
-                    index_in_set = 0;
-                    $display("store 0");
-                    store;
-                end else if (valid_array[cpu_set_buff][1] == 0) begin
-                    index_in_set = 1;
-                    $display("store 1");
-                    store;
-                end else begin
-                    // LRU
-                    if (dirty_array[cpu_set_buff][last_used_array[cpu_set_buff]] == 1) begin
-                        $display("write to mm");
-                        mem_address_buff[CACHE_TAG_SIZE+CACHE_SET_SIZE-1:CACHE_SET_SIZE] = tag_array[cpu_set_buff][last_used_array[cpu_set_buff]];
-                        mem_address_buff[CACHE_SET_SIZE-1:0] = cpu_set_buff;
-                        write_to_MM;
-                    end
-                    
-                    index_in_set = last_used_array[cpu_set_buff];
-                    store;
-                end
+            end else begin
+                replace_from_MM;
                 read_from_storage;
             end
 
             cpu_command_buff = C1_WRITE32_RESP;
             delay;
+
+            if (cur_cpu_command == C1_READ32) begin
+                delay;
+                cpu_offset_buff += 2;
+                read_from_storage;
+                delay;
+            end
+
             cpu_command_buff = 'z;
             cpu_data_bus_buff = 'z;
             cur_cpu_command = 'z;
 
         end else if (cpu_command == C1_WRITE8 || cpu_command == C1_WRITE16) begin
-            $display("C1_WRITEX");
+            // $display("C1_WRITEX");
             cur_cpu_command = cpu_command;
+            cpu_data_to_write[0 +: BUS_SIZE] = cpu_data;
             read_cpu_address;
+            cpu_data_to_write[BUS_SIZE +: BUS_SIZE] = cpu_data;
 
             if (tag_array[cpu_set_buff][0] == cpu_tag_buff) begin
                 if (valid_array[cpu_set_buff][0] == 1) begin
-                    $display("found 0");
+                    // $display("found 0");
                     index_in_set = 0;
                     write_to_storage;
                 end
             end else if (tag_array[cpu_set_buff][1] == cpu_tag_buff) begin
                 if (valid_array[cpu_set_buff][1] == 1) begin
-                    $display("found 1");
+                    // $display("found 1");
                     index_in_set = 1;
                     write_to_storage;
                 end
+            end else begin
+                replace_from_MM;
+                write_to_storage;
             end
             cpu_command_buff = C1_WRITE32_RESP;
             delay;

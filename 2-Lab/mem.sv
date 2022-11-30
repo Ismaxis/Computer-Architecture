@@ -34,7 +34,7 @@ module mem #(
             for (int i = 0; i < 99; i=i+1) begin
                 storage[i] = $random(SEED)>>16;
             end
-            $display("filled");
+            // $display("filled");
 
             data_buff = 'z;
             command_buff = 0;
