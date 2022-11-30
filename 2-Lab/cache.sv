@@ -12,7 +12,7 @@ module cache#(
 
     output [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] mem_address,
     inout [BUS_SIZE-1:0] mem_data,
-    output [2-1:0] mem_command
+    inout [2-1:0] mem_command
 );
 
     parameter CACHE_WAY         = 2;
@@ -62,6 +62,12 @@ module cache#(
         end
     endtask	
 
+    task wait_for_resp;
+        while (mem_command !== C2_RESPONSE) begin 
+            delay;
+        end
+    endtask
+
     task evict_if_dirty;
         if (dirty_array[cpu_set_buff][index_in_set] == 1) begin
             mem_address_buff[CACHE_TAG_SIZE+CACHE_SET_SIZE-1:CACHE_SET_SIZE] = tag_array[cpu_set_buff][index_in_set];
@@ -71,10 +77,11 @@ module cache#(
     endtask
 
     task replace_from_MM;
-        // $display("replace_from_MM");
         // set
         mem_command_buff = C2_READ;
         delay;
+        mem_command_buff = 'z;
+        wait_for_resp;
 
         // read
         for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
@@ -103,10 +110,15 @@ module cache#(
     endtask 
 
     task write_to_MM;
+        // set
         mem_command_buff = C2_WRITE;
         delay;
+        mem_command_buff = 'z;
+        mem_data_buff = data_array[cpu_set_buff][index_in_set][0 +: BUS_SIZE];
+        wait_for_resp;
+
         // write
-        for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
+        for (int i=1; i<CACHE_LINE_SIZE/2; i=i+1) begin
             mem_data_buff = data_array[cpu_set_buff][index_in_set][BUS_SIZE*i +: BUS_SIZE];
             delay;
         end
@@ -159,15 +171,6 @@ module cache#(
         update_flags;
     endtask
 
-    initial begin
-        mem_line_buff     =  0;
-        cpu_data_bus_buff = 'z;
-        cpu_command_buff  = 'z;
-        cur_cpu_command   =  0;
-        mem_command_buff  = 'z;
-        mem_data_buff     = 'z;
-    end
-
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             for (int i=0; i<CACHE_SETS_COUNT; i=i+1) begin
@@ -180,9 +183,13 @@ module cache#(
                 tag_array[i][1]   = 'z;
                 data_array[i][1]  = 'z;
             end
+            mem_line_buff     =  0;
+            cpu_data_bus_buff = 'z;
+            cpu_command_buff  = 'z;
+            cur_cpu_command   =  0;
+            mem_command_buff  = 'z;
+            mem_data_buff     = 'z;
         end else if (cpu_command == C1_READ8 || cpu_command == C1_READ16 || cpu_command == C1_READ32) begin
-            // $display("C1_READX");
-            // $display("valid : %b, %b", valid_array[cpu_set_buff][0], valid_array[cpu_set_buff][1]);
             cur_cpu_command = cpu_command;
             read_cpu_address;
 
@@ -231,13 +238,14 @@ module cache#(
                 replace_from_MM;
                 write_to_storage;
             end
+
             cpu_command_buff = C1_WRITE32_RESP;
             delay;
             cpu_command_buff = 'z;
             cur_cpu_command  = 'z;
+
         end else if (cpu_command == C1_INV_LINE) begin
             read_cpu_address;
-            // $display("valid : %b, %b", valid_array[cpu_set_buff][0], valid_array[cpu_set_buff][1]);
             if (tag_array[cpu_set_buff][0] == cpu_tag_buff) begin
                 index_in_set = 0;
                 evict_if_dirty;
@@ -247,8 +255,6 @@ module cache#(
                 evict_if_dirty;
                 valid_array[cpu_set_buff][1] = 0;
             end
-
-            // $display("valid : %b, %b", valid_array[cpu_set_buff][0], valid_array[cpu_set_buff][1]);
 
             cpu_command_buff = C1_WRITE32_RESP;
             delay;
