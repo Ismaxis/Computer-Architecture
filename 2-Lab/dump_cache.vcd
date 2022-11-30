@@ -1,5 +1,5 @@
 $date
-	Wed Nov 30 02:53:31 2022
+	Wed Nov 30 17:15:41 2022
 $end
 $version
 	Icarus Verilog
@@ -30,92 +30,96 @@ $var reg 16 0 cpu_data_bus_buff [15:0] $end
 $var reg 4 1 cpu_offset_buff [3:0] $end
 $var reg 5 2 cpu_set_buff [4:0] $end
 $var reg 10 3 cpu_tag_buff [9:0] $end
-$var reg 15 4 mem_address_buff [14:0] $end
-$var reg 2 5 mem_command_buff [1:0] $end
-$var reg 16 6 mem_data_buff [15:0] $end
-$var reg 128 7 mem_line_buff [127:0] $end
-$var reg 1 8 where_to_store $end
+$var reg 3 4 cur_cpu_command [2:0] $end
+$var reg 1 5 index_in_set $end
+$var reg 15 6 mem_address_buff [14:0] $end
+$var reg 2 7 mem_command_buff [1:0] $end
+$var reg 16 8 mem_data_buff [15:0] $end
+$var reg 128 9 mem_line_buff [127:0] $end
 $scope begin $ivl_for_loop1 $end
-$var integer 32 9 i [31:0] $end
+$var integer 32 : i [31:0] $end
 $upscope $end
 $scope begin $ivl_for_loop2 $end
-$var integer 32 : i [31:0] $end
+$var integer 32 ; i [31:0] $end
 $upscope $end
 $scope task delay $end
 $upscope $end
 $scope task read_cpu_address $end
 $upscope $end
+$scope task read_from_storage $end
+$upscope $end
 $scope task store $end
 $upscope $end
 $scope task write_to_MM $end
 $scope begin $ivl_for_loop0 $end
-$var integer 32 ; i [31:0] $end
+$var integer 32 < i [31:0] $end
 $upscope $end
+$upscope $end
+$scope task write_to_storage $end
 $upscope $end
 $upscope $end
 $scope module cpu $end
 $var wire 1 ' clk $end
-$var wire 3 < command [2:0] $end
-$var wire 16 = data [15:0] $end
-$var wire 15 > address [14:0] $end
-$var reg 19 ? cpu_address_buff [18:0] $end
-$var reg 3 @ cpu_command_buff [2:0] $end
-$var reg 16 A data_to_write [15:0] $end
-$var reg 16 B recieved_data [15:0] $end
+$var wire 3 = command [2:0] $end
+$var wire 16 > data [15:0] $end
+$var wire 15 ? address [14:0] $end
+$var reg 19 @ cpu_address_buff [18:0] $end
+$var reg 3 A cpu_command_buff [2:0] $end
+$var reg 16 B data_to_write [15:0] $end
+$var reg 16 C recieved_data [15:0] $end
 $scope task delay $end
 $upscope $end
 $upscope $end
 $scope module mem $end
-$var wire 15 C address [14:0] $end
+$var wire 15 D address [14:0] $end
 $var wire 1 ' clk $end
-$var wire 2 D command [1:0] $end
-$var wire 16 E data [15:0] $end
+$var wire 2 E command [1:0] $end
+$var wire 16 F data [15:0] $end
 $var wire 1 ( reset $end
-$var reg 2 F command_buff [1:0] $end
-$var reg 16 G data_buff [15:0] $end
-$var reg 4 H rwPosition [3:0] $end
-$var integer 32 I SEED [31:0] $end
+$var reg 2 G command_buff [1:0] $end
+$var reg 16 H data_buff [15:0] $end
+$var reg 4 I rwPosition [3:0] $end
+$var integer 32 J SEED [31:0] $end
 $scope begin $ivl_for_loop3 $end
-$var integer 32 J i [31:0] $end
-$upscope $end
-$scope begin $ivl_for_loop4 $end
 $var integer 32 K i [31:0] $end
 $upscope $end
-$scope begin $ivl_for_loop5 $end
+$scope begin $ivl_for_loop4 $end
 $var integer 32 L i [31:0] $end
 $upscope $end
-$scope task wait100 $end
+$scope begin $ivl_for_loop5 $end
+$var integer 32 M i [31:0] $end
 $upscope $end
 $upscope $end
 $upscope $end
 $enddefinitions $end
 #0
 $dumpvars
+b0 M
 b0 L
 b0 K
-b0 J
-b110111000011110110 I
+b110111000011110110 J
+bx I
 bx H
 bx G
 bx F
-bx E
-bz D
-bx C
-b0 B
+bz E
+bx D
+b0 C
+bz B
 bz A
-bz @
+bx @
 bx ?
-bx >
+bz >
 bz =
-bz <
+b0 <
 b0 ;
 b0 :
 b0 9
-x8
-b0 7
-bz 6
-bz 5
-bx 4
+bz 8
+bz 7
+bx 6
+x5
+b0 4
 bx 3
 bx 2
 bx 1
@@ -137,25 +141,25 @@ bz "
 bz !
 $end
 #1
-b0 H
-b0 F
+b0 I
+b0 G
 bz #
 bz -
-bz E
-bz G
-b1100011 J
-b110000110000011110001000101 I
-b100000 9
+bz F
+bz H
+b1100011 K
+b110000110000011110001000101 J
+b100000 :
 1(
 #2
 b10 &
 b10 .
-b10 >
 b10 ?
+b10 @
 b1 !
 b1 )
-b1 <
-b1 @
+b1 =
+b1 A
 0'
 0(
 #3
@@ -163,119 +167,150 @@ b10 2
 b0 3
 b10 %
 b10 +
-b10 C
-b10 4
+b10 D
+b10 6
+b1 4
 1'
 #4
 b0 &
 b0 .
-b0 >
 b0 ?
+b0 @
 0'
 #5
 1'
 #6
 b10 $
 b10 ,
-b10 D
-b10 5
+b10 E
+b10 7
 b0 1
 bz !
 bz )
-bz <
-bz @
+bz =
+bz A
 0'
 #7
+b10 I
+b10000 L
+b1000000111100 #
+b1000000111100 -
+b1000000111100 F
+b1000000111100 H
 1'
 #8
-b0zzzzzzzzzzzzzzzz 7
+b1000000111100 9
 0'
 #9
+b100 I
+b0 #
+b0 -
+b0 F
+b0 H
+b10000 L
 1'
 #10
-b0zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz 7
-b1 :
+b1 ;
 0'
 #11
+b110 I
+b10000 L
 1'
 #12
-b0zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz 7
-b10 :
+b10 ;
 0'
 #13
+b1000 I
+b10000 L
 1'
 #14
-b0zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz 7
-b11 :
+b11 ;
 0'
 #15
+b1010 I
+b10000 L
 1'
 #16
-b0zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz 7
-b100 :
+b100 ;
 0'
 #17
+b1100 I
+b10000 L
 1'
 #18
-b0zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz 7
-b101 :
+b101 ;
 0'
 #19
+b1110 I
+b10000 L
 1'
 #20
-b0zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz 7
-b110 :
+b110 ;
 0'
 #21
+b0 I
+b10000 L
 1'
 #22
-bz 7
-b111 :
+b111 ;
 0'
 #23
+b10 I
+b1000000111100 #
+b1000000111100 -
+b1000000111100 F
+b1000000111100 H
+b10000 L
 1'
 #24
 b111 !
 b111 )
-b111 <
+b111 =
 b111 /
-b0zzzzzzzz "
-b0zzzzzzzz *
-b0zzzzzzzz =
-b0zzzzzzzz 0
-08
+b111100 "
+b111100 *
+b111100 >
+b111100 0
+05
 b0 $
 b0 ,
-b0 D
-b0 5
-b1000 :
+b0 E
+b0 7
+b1000 ;
 0'
 #25
+bz #
+bz -
+bz F
+bz H
+b0 I
 1'
 #26
 b10 &
 b10 .
-b10 >
+b10 ?
+bz 4
 bz 0
 bz /
 b101010101010101 "
 b101010101010101 *
-b101010101010101 =
-b101010101010101 A
-b10 ?
+b101010101010101 >
+b101010101010101 B
+b10 @
 b101 !
 b101 )
-b101 <
-b101 @
-b0zzzzzzzz B
+b101 =
+b101 A
+b111100 C
 0'
 #27
+b101 4
 1'
 #28
 b0 &
 b0 .
-b0 >
 b0 ?
+b0 @
 0'
 #29
 1'
@@ -283,318 +318,138 @@ b0 ?
 b111 /
 b111 !
 b111 )
-b111 <
-bz @
+b111 =
+bz A
 0'
 #31
 1'
 #32
 b10 &
 b10 .
-b10 >
-bz /
 b10 ?
-b1 !
-b1 )
-b1 <
-b1 @
+bz 4
+bz /
+b10 @
+b10 !
+b10 )
+b10 =
+b10 A
 bz "
 bz *
-bz =
-bz A
+bz >
+bz B
 0'
 #33
+b10 4
 1'
 #34
 b0 &
 b0 .
-b0 >
 b0 ?
+b0 @
 0'
 #35
 1'
 #36
 b111 /
-b1010101 "
-b1010101 *
-b1010101 =
-b1010101 0
+b1000001010101 "
+b1000001010101 *
+b1000001010101 >
+b1000001010101 0
 b111 !
 b111 )
-b111 <
-bz @
+b111 =
+bz A
 0'
 #37
 1'
 #38
-b100010 &
-b100010 .
-b100010 >
-bz "
-bz *
-bz =
+b10 &
+b10 .
+b10 ?
+bz 4
 bz 0
 bz /
-b100010 ?
-b1 !
-b1 )
-b1 <
-b1 @
-b1010101 B
+b101010101010101 "
+b101010101010101 *
+b101010101010101 >
+b101010101010101 B
+b10 @
+b110 !
+b110 )
+b110 =
+b110 A
+b1000001010101 C
 0'
 #39
-b1 3
-b100010 %
-b100010 +
-b100010 C
-b100010 4
+b110 4
 1'
 #40
 b0 &
 b0 .
-b0 >
 b0 ?
+b0 @
 0'
 #41
 1'
 #42
-b10 $
-b10 ,
-b10 D
-b10 5
-bz !
-bz )
-bz <
-bz @
+b111 /
+b111 !
+b111 )
+b111 =
+bz A
 0'
 #43
 1'
 #44
-b0 :
+b10 &
+b10 .
+b10 ?
+bz 4
+bz /
+b10 @
+b10 !
+b10 )
+b10 =
+b10 A
+bz "
+bz *
+bz >
+bz B
 0'
 #45
+b10 4
 1'
 #46
-b1 :
+b0 &
+b0 .
+b0 ?
+b0 @
 0'
 #47
 1'
 #48
-b10 :
+b111 /
+b101010101010101 "
+b101010101010101 *
+b101010101010101 >
+b101010101010101 0
+b111 !
+b111 )
+b111 =
+bz A
 0'
 #49
 1'
 #50
-b11 :
-0'
-#51
-1'
-#52
-b100 :
-0'
-#53
-1'
-#54
-b101 :
-0'
-#55
-1'
-#56
-b110 :
-0'
-#57
-1'
-#58
-b111 :
-0'
-#59
-1'
-#60
-b111 !
-b111 )
-b111 <
-b111 /
-b0zzzzzzzz "
-b0zzzzzzzz *
-b0zzzzzzzz =
-b0zzzzzzzz 0
-18
-b0 $
-b0 ,
-b0 D
-b0 5
-b1000 :
-0'
-#61
-1'
-#62
-b1100010 &
-b1100010 .
-b1100010 >
+bz 4
 bz "
 bz *
-bz =
-bz 0
-bz /
-b1100010 ?
-b1 !
-b1 )
-b1 <
-b1 @
-b0zzzzzzzz B
-0'
-#63
-b11 3
-b1100010 %
-b1100010 +
-b1100010 C
-b1100010 4
-1'
-#64
-b0 &
-b0 .
-b0 >
-b0 ?
-0'
-#65
-1'
-#66
-b10 $
-b10 ,
-b10 D
-b10 5
-bz !
-bz )
-bz <
-bz @
-0'
-#67
-1'
-#68
-b0 :
-0'
-#69
-1'
-#70
-b1 :
-0'
-#71
-1'
-#72
-b10 :
-0'
-#73
-1'
-#74
-b11 :
-0'
-#75
-1'
-#76
-b100 :
-0'
-#77
-1'
-#78
-b101 :
-0'
-#79
-1'
-#80
-b110 :
-0'
-#81
-1'
-#82
-b111 :
-0'
-#83
-1'
-#84
-b10 %
-b10 +
-b10 C
-b10 4
-b11 $
-b11 ,
-b11 D
-b11 5
-b1000 :
-0'
-#85
-1'
-#86
-bz01010101 #
-bz01010101 -
-bz01010101 E
-bz01010101 6
-0'
-#87
-1'
-#88
-bz #
-bz -
-bz E
-bz 6
-b1 ;
-0'
-#89
-1'
-#90
-b10 ;
-0'
-#91
-1'
-#92
-b11 ;
-0'
-#93
-1'
-#94
-b100 ;
-0'
-#95
-1'
-#96
-b101 ;
-0'
-#97
-1'
-#98
-b110 ;
-0'
-#99
-1'
-#100
-b111 ;
-0'
-#101
-1'
-#102
-b111 !
-b111 )
-b111 <
-b111 /
-b0zzzzzzzz "
-b0zzzzzzzz *
-b0zzzzzzzz =
-b0zzzzzzzz 0
-08
-b0 $
-b0 ,
-b0 D
-b0 5
-b1000 ;
-0'
-#103
-1'
-#104
-bz "
-bz *
-bz =
+bz >
 bz 0
 bz !
 bz )
-bz <
+bz =
 bz /
+b101010101010101 C
 0'

@@ -69,7 +69,34 @@ module cpu #(
         data_to_write = 'z;
         
         // READ2
-        cpu_command_buff = C1_READ8;
+        cpu_command_buff = C1_READ16;
+        cpu_address_buff = 15'b0000000000_00010;
+        delay;
+        cpu_address_buff = 15'b0000;
+        delay;
+        cpu_command_buff = 'z;
+        delay;
+        while (command !== C1_WRITE32_RESP) begin 
+            delay;
+        end
+        recieved_data = data;
+        $display("recieved: %b", recieved_data);
+        // WRITE1
+        cpu_command_buff = C1_WRITE16;
+        cpu_address_buff = 15'b0000000000_00010;
+        data_to_write = 16'b0101010101010101;
+        delay;
+        cpu_address_buff = 15'b0000;
+        delay;
+        cpu_command_buff = 'z;
+        delay;
+        while (command !== C1_WRITE32_RESP) begin 
+            delay;
+        end
+        data_to_write = 'z;
+        
+        // READ2
+        cpu_command_buff = C1_READ16;
         cpu_address_buff = 15'b0000000000_00010;
         delay;
         cpu_address_buff = 15'b0000;
@@ -83,32 +110,32 @@ module cpu #(
         $display("recieved: %b", recieved_data);
         
         // READ3
-        cpu_command_buff = C1_READ8;
-        cpu_address_buff = 15'b0000000001_00010;
-        delay;
-        cpu_address_buff = 15'b0000;
-        delay;
-        cpu_command_buff = 'z;
-        delay;
-        while (command !== C1_WRITE32_RESP) begin 
-            delay;
-        end
-        recieved_data = data;
-        $display("recieved: %b", recieved_data);
+        // cpu_command_buff = C1_READ32;
+        // cpu_address_buff = 15'b0000000001_00010;
+        // delay;
+        // cpu_address_buff = 15'b0000;
+        // delay;
+        // cpu_command_buff = 'z;
+        // delay;
+        // while (command !== C1_WRITE32_RESP) begin 
+        //     delay;
+        // end
+        // recieved_data = data;
+        // $display("recieved: %b", recieved_data);
 
-        // READ4
-        cpu_command_buff = C1_READ8;
-        cpu_address_buff = 15'b0000000011_00010;
-        delay;
-        cpu_address_buff = 15'b0000;
-        delay;
-        cpu_command_buff = 'z;
-        delay;
-        while (command !== C1_WRITE32_RESP) begin 
-            delay;
-        end
-        recieved_data = data;
-        $display("recieved: %b", recieved_data);
+        // // READ4
+        // cpu_command_buff = C1_READ8;
+        // cpu_address_buff = 15'b0000000011_00010;
+        // delay;
+        // cpu_address_buff = 15'b0000;
+        // delay;
+        // cpu_command_buff = 'z;
+        // delay;
+        // while (command !== C1_WRITE32_RESP) begin 
+        //     delay;
+        // end
+        // recieved_data = data;
+        // $display("recieved: %b", recieved_data);
 
         $finish();
     end
