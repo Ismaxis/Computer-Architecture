@@ -21,13 +21,16 @@ module mem #(
 
     reg [CACHE_LINE_SIZE*8-1:0] storage [MEM_SIZE-1:0]; // 2^15 16-byte lines
     reg [BUS_SIZE-1:0] data_buff; // single bus
-    reg [2-1:0] command_buff;
 
     reg [CACHE_OFFSET_SIZE-1:0] rwPosition; // ptr to next 2 bytes to read/write
 
     integer SEED = 225526;
 
-
+    task delay;
+        begin
+            @(negedge clk);
+        end
+    endtask	
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
@@ -37,24 +40,22 @@ module mem #(
             // $display("filled");
 
             data_buff = 'z;
-            command_buff = 0;
             rwPosition = 0;
         end else begin
-            command_buff = 0;
             if (command == C2_READ) begin
                 // READ
-                for (int i=0; i<CACHE_LINE_SIZE; i=i+1) begin
-                    data_buff[i] = storage[address][rwPosition*8 + i];
-                end
+                data_buff = storage[address][rwPosition*8 +: BUS_SIZE];
                 rwPosition += 2;
             end else if (command == C2_WRITE) begin
+                data_buff = 'z;
                 // WRITE
-                // $display("before: %b", storage[address]);
-                for (int i=0; i<CACHE_LINE_SIZE; i=i+1) begin
-                    storage[address][rwPosition*8 + i] = data[i];
+                delay;
+                for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
+                    storage[address][BUS_SIZE*i +: BUS_SIZE] = data;
+                    delay;
                 end
                 // $display("after : %b", storage[address]);
-                rwPosition += 2;
+                // rwPosition += 2;
             end else begin
                 rwPosition = 0;
                 data_buff = 'z;

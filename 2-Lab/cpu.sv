@@ -111,9 +111,9 @@ module cpu #(
         data_buff = 'z;
     end
 
-    // Place for test calls
-    initial begin
-        delay;
+    task read_write_test;
+        $display("----------------");
+        $display("#############  READ32/WRITE32 TEST  #############");
         $display("----------------");
 
         cpu_address_buff = 19'b0000000000_01010_0000;
@@ -147,6 +147,98 @@ module cpu #(
         READ32;
         $display("data      %b", local_storage);
         $display("----------------");
+    endtask
+
+    task eviction_test;
+        $display("\n###########################################");
+        $display("#############  EVICTION TEST  #############");
+        $display("###########################################\n");
+
+        $display("~~~~~~~~~~~~~");
+        $display("~~~ FIRST ~~~");
+        $display("~~~~~~~~~~~~~");
+        $display("----------------");
+        cpu_address_buff = 19'b0000000000_01110_0000;
+        $display("read from %b", cpu_address_buff);
+        READ32;
+        $display("data      %b", local_storage);
+        $display("----------------");
+
+        cpu_address_buff = 19'b0000000000_01110_0000;
+        data_to_write = 32'b1111_0000_1111_0000_0000_1111_0000_1111;
+        $display("write to  %b", cpu_address_buff);
+        $display("data      %b", data_to_write);
+        WRITE32;
+        $display("----------------");
+
+        cpu_address_buff = 19'b0000000000_01110_0000;
+        $display("read from %b", cpu_address_buff);
+        READ32;
+        $display("data      %b", local_storage);
+        $display("----------------\n");
+
+        $display("~~~~~~~~~~~~~~");
+        $display("~~~ SECOND ~~~");
+        $display("~~~~~~~~~~~~~~");
+        $display("----------------");
+        cpu_address_buff = 19'b0000000001_01110_0000;
+        $display("read from %b", cpu_address_buff);
+        READ32;
+        $display("data      %b", local_storage);
+        $display("----------------");
+
+        cpu_address_buff = 19'b0000000001_01110_0000;
+        data_to_write = 32'b1111_1111_1111_1111_0000_1111_1111_0000;
+        $display("write to  %b", cpu_address_buff);
+        $display("data      %b", data_to_write);
+        WRITE32;
+        $display("----------------");
+
+        cpu_address_buff = 19'b0000000001_01110_0000;
+        $display("read from %b", cpu_address_buff);
+        READ32;
+        $display("data      %b", local_storage);
+        $display("----------------\n");
+
+        $display("~~~~~~~~~~~~~~~~~");
+        $display("~~~ EVICTION! ~~~");
+        $display("~~~~~~~~~~~~~~~~~");
+        $display("----------------");
+        cpu_address_buff = 19'b0000000010_01110_0000;
+        $display("read from %b", cpu_address_buff);
+        READ32;
+        $display("data      %b", local_storage);
+        $display("----------------");
+
+        cpu_address_buff = 19'b0000000010_01110_0000;
+        data_to_write = 32'b1111_1111_0001_1001_1001_1000_1111_1111;
+        $display("write to  %b", cpu_address_buff);
+        $display("data      %b", data_to_write);
+        WRITE32;
+        $display("----------------");
+
+        cpu_address_buff = 19'b0000000010_01110_0000;
+        $display("read from %b", cpu_address_buff);
+        READ32;
+        $display("data      %b", local_storage);
+        $display("----------------\n");
+
+        $display("~~~~~~~~~~~~~~~~~~~");
+        $display("~~~ FIRST AGAIN ~~~");
+        $display("~~~~~~~~~~~~~~~~~~~");
+        $display("----------------");
+        cpu_address_buff = 19'b0000000000_01110_0000;
+        $display("read from %b", cpu_address_buff);
+        READ32;
+        $display("data      %b", local_storage);
+        $display("----------------");
+    endtask
+
+    // Place for test calls
+    initial begin
+        delay;
+        
+        eviction_test;
 
         $finish();
     end

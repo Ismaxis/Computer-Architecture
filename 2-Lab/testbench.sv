@@ -25,6 +25,12 @@ module testbench ();
     mem #(MEM_ADDR_SIZE, BUS_SIZE, CACHE_OFFSET_SIZE, CACHE_LINE_SIZE) 
     mem(clk, reset, mem_address, mem_data, mem_command);
 
+     task delay;
+        begin
+            @(negedge clk);
+        end
+    endtask	
+
     initial begin
         reset = 0;
         #1 reset = 1;
@@ -35,6 +41,8 @@ module testbench ();
             #1 clk = ~clk;
             // $display("addr: %b", mem_address);
             // $display("data: %b", mem_data);
+            // $display("cache.: %b", cache.mem_data_buff);
+            // $display("mem.: %b", mem.data_buff);
             // $display("command: %b", mem_command);
         end
     end
