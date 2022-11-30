@@ -1,7 +1,7 @@
 module testbench ();
-    parameter BUS_SIZE = 16 ;
+    parameter BUS_SIZE = 16;
     parameter MEM_ADDR_SIZE = 10 + 9;   // log2(MEM_SIZE)
-    parameter CACHE_OFFSET_SIZE = 4;    // log2(CACHE_LINE_SIZE)
+    parameter CACHE_OFFSET_SIZE = $clog2(CACHE_LINE_SIZE);
     parameter CACHE_LINE_SIZE = 16;
     wire [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] cpu_address;
     wire [BUS_SIZE-1:0] cpu_data;

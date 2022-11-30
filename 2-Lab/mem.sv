@@ -22,7 +22,7 @@ module mem #(
     reg [CACHE_LINE_SIZE*8-1:0] storage [MEM_SIZE-1:0]; // 2^15 16-byte lines
     reg [BUS_SIZE-1:0] data_buff; // single bus
 
-    reg [CACHE_OFFSET_SIZE-1:0] rwPosition; // ptr to next 2 bytes to read/write
+    // reg [CACHE_OFFSET_SIZE-1:0] rPosition; // ptr to next 2 bytes to read/write
 
     integer SEED = 225526;
 
@@ -37,27 +37,24 @@ module mem #(
             for (int i = 0; i < 99; i=i+1) begin
                 storage[i] = $random(SEED)>>16;
             end
-            // $display("filled");
-
             data_buff = 'z;
-            rwPosition = 0;
         end else begin
             if (command == C2_READ) begin
                 // READ
-                data_buff = storage[address][rwPosition*8 +: BUS_SIZE];
-                rwPosition += 2;
+                for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
+                    data_buff = storage[address][BUS_SIZE*i +: BUS_SIZE];
+                    delay;
+                end
+                delay;
             end else if (command == C2_WRITE) begin
                 data_buff = 'z;
-                // WRITE
                 delay;
+                // WRITE
                 for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
                     storage[address][BUS_SIZE*i +: BUS_SIZE] = data;
                     delay;
                 end
-                // $display("after : %b", storage[address]);
-                // rwPosition += 2;
             end else begin
-                rwPosition = 0;
                 data_buff = 'z;
             end
         end
