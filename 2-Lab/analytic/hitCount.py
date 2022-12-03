@@ -39,18 +39,20 @@ class Cache:
         tag = Cache.getTag(addr)
         self.checkHit(setNum, tag)
 
-    def checkHit(self, setNum: int, tag):
+    def checkHit(self, setNum: int, tag: int):
         self.reqCount += 1
         for i in range(2):
             if (self.valid_array[setNum, i] and self.tag_array[setNum, i] == tag):
                 self.hitCount += 1
-                self.lru_array[setNum] = ~self.lru_array[setNum]
+                self.lru_array[setNum] = (i == 0)
                 return
 
         self.missCount += 1
-        lru_index = int(self.lru_array[int(self.lru_array[setNum])])
+        lru_index = int(self.lru_array[setNum])
         self.tag_array[setNum, lru_index] = tag
         self.valid_array[setNum, lru_index] = True
+        self.lru_array[setNum] = not self.lru_array[setNum]
+        return
 
     @ staticmethod
     def getTag(address: int) -> int:

@@ -386,18 +386,18 @@ module cpu #(
                 s = 0;
                 for (k=0; k<K; ++k) begin
                     // a
-                    cpu_address_buff = pa + k*aIntSize;
+                    cpu_address_buff = aIntSize*(M*i + k);// pa + k*aIntSize;
                     READ8;
                     s += local_storage[7:0];
 
                     //b 
-                    cpu_address_buff = pb + j*bIntSize;
+                    cpu_address_buff = bIntSize*(K*k + j); //pb + j*bIntSize;
                     READ16;
                     s += local_storage[16:0];
                     
                     pb += N;
                 end
-                cpu_address_buff = pc + j*cIntSize;
+                cpu_address_buff = cIntSize*(M*i + j); //pc + j*cIntSize;
                 data_to_write = s;
                 WRITE32;
             end
