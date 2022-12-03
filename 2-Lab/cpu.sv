@@ -377,6 +377,7 @@ module cpu #(
     int k;
 
     task matrix_mull_sim;
+        $display("Simulation started");
         pa = aStart;
         pc = cStart;
         for (int i=0; i<M; ++i) begin
@@ -398,11 +399,12 @@ module cpu #(
                 end
                 cpu_address_buff = pc + j*cIntSize;
                 data_to_write = s;
-                WRITE8;
+                WRITE32;
             end
             pa += K;
             pc += N;
         end
+        $display("Simulation finished");
     endtask
 
     // Place for test calls

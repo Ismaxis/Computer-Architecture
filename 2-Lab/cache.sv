@@ -60,6 +60,7 @@ module cache#(
     // Analytic
     real req;
     real hit;
+    real miss;
 
     // Tasks
     task delay;
@@ -182,6 +183,7 @@ module cache#(
         f = $fopen("cache.dump", "w");
         if (f) begin
             $display("req: %d\nhits: %d\nrate: %f", req, hit, hit/req);
+            $display("miss: %d", miss);
             $fdisplay(f,"$$$$$$ CACHE DUMP $$$$$$");
             for (int i=0; i<CACHE_SETS_COUNT; i=i+1) begin
                 $fdisplay(f,"== SET 0x%0h\t==", i);
@@ -244,6 +246,7 @@ module cache#(
                 index_in_set = 1;
                 read_from_storage;
             end else begin
+                miss = miss + 1;
                 replace_from_MM;
                 read_from_storage;
             end
@@ -283,6 +286,7 @@ module cache#(
                 index_in_set = 1;
                 write_to_storage;
             end else begin
+                miss = miss + 1;
                 replace_from_MM;
                 write_to_storage;
             end
