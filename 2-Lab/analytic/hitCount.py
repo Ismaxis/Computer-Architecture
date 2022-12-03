@@ -7,7 +7,7 @@ K = 32
 
 CACHE_OFFSET_SIZE = 4
 CACHE_SET_COUNT = 32
-CACHE_SET_SIZE = int(math.log2(CACHE_SET_COUNT))
+CACHE_SET_SIZE = 5 # int(math.log2(CACHE_SET_COUNT))
 CACHE_LINE_SIZE = 16
 
 aStart = 0
@@ -33,8 +33,8 @@ class Cache:
         self.hitCount = 0
         self.missCount = 0
 
-    def req(self, arrayNum: int, i: int, j: int):
-        addr = Cache.getAddress(arrayNum, i, j)
+    def req(self, addr: int):
+        # print("{0:b}".format(addr))
         setNum = Cache.getSet(addr)
         tag = Cache.getTag(addr)
         self.checkHit(setNum, tag)
@@ -56,7 +56,7 @@ class Cache:
 
     @ staticmethod
     def getTag(address: int) -> int:
-        return(address >> (CACHE_OFFSET_SIZE + CACHE_SET_SIZE))
+        return (address >> (CACHE_OFFSET_SIZE + CACHE_SET_SIZE))
 
     @ staticmethod
     def getSet(address: int) -> int:
@@ -74,13 +74,18 @@ class Cache:
 
 
 def simulate(cache):
+    pa = aStart
+    pc = cStart
     for i in range(M):
         for j in range(N):
+            pb = bStart
             for k in range(K):
-                cache.req(0, i, k)  # a
-                cache.req(1, k, j)  # b
-
-            cache.req(2, i, j)  # c
+                cache.req(pa + k*aIntSize)  # a
+                cache.req(pb + j*bIntSize)  # b
+                pb += N*bIntSize
+            cache.req(pc + j*cIntSize)  # c
+        pa += K*aIntSize
+        pc += N*cIntSize
 
 
 def main():
@@ -94,7 +99,7 @@ def main():
     print(
         f'{bcolors.HEADER}{bcolors.BOLD}Requests{bcolors.ENDC}: {cache.reqCount}\n{bcolors.HEADER}{bcolors.BOLD}Hits{bcolors.ENDC}:     {cache.hitCount}')
     print(
-        f'{bcolors.WARNING}{round(cache.hitCount/cache.reqCount,3)}%{bcolors.ENDC} of requsets is {bcolors.UNDERLINE}{bcolors.OKBLUE}HITS{bcolors.ENDC}\n')
+        f'{bcolors.WARNING}{round(cache.hitCount/cache.reqCount, 6)}{bcolors.ENDC} of requsets is {bcolors.UNDERLINE}{bcolors.OKBLUE}HITS{bcolors.ENDC}\n')
 
 
 if __name__ == '__main__':
