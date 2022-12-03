@@ -20,7 +20,7 @@ module cache#(
     parameter CACHE_LINE_COUNT  = 64;
 
     parameter CACHE_SET_SIZE    = $clog2(CACHE_SETS_COUNT);
-    parameter CACHE_TAG_SIZE    = CACHE_LINE_SIZE - CACHE_SET_SIZE - CACHE_OFFSET_SIZE;
+    parameter CACHE_TAG_SIZE    = 10; //CACHE_LINE_SIZE - CACHE_SET_SIZE - CACHE_OFFSET_SIZE;
     parameter CACHE_SIZE        = CACHE_LINE_COUNT * CACHE_LINE_SIZE;
     parameter CACHE_SETS_COUNT  = CACHE_LINE_COUNT/CACHE_WAY; 
 
@@ -60,7 +60,6 @@ module cache#(
     // Analytic
     real req;
     real hit;
-    real miss;
 
     // Tasks
     task delay;
@@ -77,8 +76,7 @@ module cache#(
 
     task evict_if_dirty;
         if (dirty_array[cpu_set_buff][index_in_set] == 1) begin
-            mem_address_buff[CACHE_TAG_SIZE+CACHE_SET_SIZE-1:CACHE_SET_SIZE] = tag_array[cpu_set_buff][index_in_set];
-            mem_address_buff[CACHE_SET_SIZE-1:0] = cpu_set_buff;
+            mem_address_buff = {tag_array[cpu_set_buff][index_in_set], cpu_set_buff};
             write_to_MM;
         end
     endtask
@@ -128,7 +126,6 @@ module cache#(
             mem_data_buff = data_array[cpu_set_buff][index_in_set][BUS_SIZE*i +: BUS_SIZE];
             delay;
         end
-
         // restore
         mem_command_buff = C2_NOP;
         mem_data_buff = 'z;
@@ -138,13 +135,9 @@ module cache#(
     task store;
         data_array[cpu_set_buff][index_in_set] = mem_line_buff;
         tag_array[cpu_set_buff][index_in_set] = cpu_tag_buff;
-        dirty_array[cpu_set_buff][index_in_set] = 0;
-        update_flags;
-    endtask
-
-    task update_flags;
         valid_array[cpu_set_buff][index_in_set] = 1;
-        last_used_array[cpu_set_buff] = ~index_in_set; // opposite 
+        dirty_array[cpu_set_buff][index_in_set] = 0;
+        last_used_array[cpu_set_buff] = ~index_in_set; 
     endtask
 
     task read_cpu_address;
@@ -164,6 +157,7 @@ module cache#(
         end else if (cur_cpu_command == C1_READ16 || cur_cpu_command == C1_READ32) begin
             cpu_data_bus_buff = data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 16];
         end
+        last_used_array[cpu_set_buff] = ~index_in_set;
     endtask 
 
     task write_to_storage;
@@ -175,7 +169,7 @@ module cache#(
             data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 32] = cpu_data_to_write;
         end
         dirty_array[cpu_set_buff][index_in_set] = 1;
-        update_flags;
+        last_used_array[cpu_set_buff] = ~index_in_set;
     endtask
 
     int f;
@@ -183,7 +177,6 @@ module cache#(
         f = $fopen("cache.dump", "w");
         if (f) begin
             $display("req: %d\nhits: %d\nrate: %f", req, hit, hit/req);
-            $display("miss: %d", miss);
             $fdisplay(f,"$$$$$$ CACHE DUMP $$$$$$");
             for (int i=0; i<CACHE_SETS_COUNT; i=i+1) begin
                 $fdisplay(f,"== SET 0x%0h\t==", i);
@@ -211,6 +204,11 @@ module cache#(
         $fclose(f);
     endtask
 
+    int g;
+    initial begin
+        g = $fopen("miss", "w");
+    end
+
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             for (int i=0; i<CACHE_SETS_COUNT; i=i+1) begin
@@ -230,6 +228,7 @@ module cache#(
             mem_command_buff  = 'z;
             mem_data_buff     = 'z;
         end else if (dump) begin
+            $fclose(g);
             dump_to_console;
         end else if (cpu_command == C1_READ8 || cpu_command == C1_READ16 || cpu_command == C1_READ32) begin
             req = req + 1;
@@ -246,7 +245,7 @@ module cache#(
                 index_in_set = 1;
                 read_from_storage;
             end else begin
-                miss = miss + 1;
+                $fdisplay(g, "%b%b r", cpu_tag_buff, cpu_set_buff);
                 replace_from_MM;
                 read_from_storage;
             end
@@ -286,7 +285,7 @@ module cache#(
                 index_in_set = 1;
                 write_to_storage;
             end else begin
-                miss = miss + 1;
+                $fdisplay(g, "%b%b w", cpu_tag_buff, cpu_set_buff);
                 replace_from_MM;
                 write_to_storage;
             end

@@ -353,20 +353,20 @@ module cpu #(
         $display("----------------");
     endtask
 
-    parameter M = 64;
-    parameter N = 60;
-    parameter K = 32;
+    parameter M = 19'd64;
+    parameter N = 19'd60;
+    parameter K = 19'd32;
     
-    parameter aStart = 0;
-    parameter aIntSize = 1;
+    parameter aStart = 19'd0;
+    parameter aIntSize = 19'd1;
     parameter aSize = M*K*aIntSize;
 
     parameter bStart = aStart + aSize;
-    parameter bIntSize = 2;
+    parameter bIntSize = 19'd2;
     parameter bSize = K*N*bIntSize;
 
     parameter cStart = bStart + bSize;
-    parameter cIntSize = 4;
+    parameter cIntSize = 19'd4;
     parameter cSize = M*N*cIntSize;
 
     int pa;
@@ -386,23 +386,23 @@ module cpu #(
                 s = 0;
                 for (k=0; k<K; ++k) begin
                     // a
-                    cpu_address_buff = aIntSize*(M*i + k);// pa + k*aIntSize;
+                    cpu_address_buff = pa + k*aIntSize;
                     READ8;
                     s += local_storage[7:0];
 
                     //b 
-                    cpu_address_buff = bIntSize*(K*k + j); //pb + j*bIntSize;
+                    cpu_address_buff = pb + j*bIntSize;
                     READ16;
-                    s += local_storage[16:0];
+                    s += local_storage[15:0];
                     
-                    pb += N;
+                    pb += N*bIntSize;
                 end
-                cpu_address_buff = cIntSize*(M*i + j); //pc + j*cIntSize;
+                cpu_address_buff = pc + j*cIntSize;
                 data_to_write = s;
                 WRITE32;
             end
-            pa += K;
-            pc += N;
+            pa += K*aIntSize;
+            pc += N*cIntSize;
         end
         $display("Simulation finished");
     endtask
@@ -419,7 +419,7 @@ module cpu #(
         
         matrix_mull_sim;
 
-        dump_all;
+        dump_cache;
 
         $finish();
     end
