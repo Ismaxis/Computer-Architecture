@@ -121,6 +121,23 @@ module cpu #(
         mem_dump_buff = 0;
     end
 
+    task dump_cache;
+        cache_dump_buff = 1;
+        delay;
+        cache_dump_buff = 0;
+    endtask
+
+    task dump_mem;
+        mem_dump_buff = 1;
+        delay;
+        mem_dump_buff = 0;
+    endtask
+
+    task dump_all;
+        dump_cache;
+        dump_mem;
+    endtask
+
     task read_write_test;
         $display("\n#############################################");
         $display("#############  READ/WRITE TEST  #############");
@@ -336,23 +353,71 @@ module cpu #(
         $display("----------------");
     endtask
 
+    parameter M = 64;
+    parameter N = 60;
+    parameter K = 32;
+    
+    parameter aStart = 0;
+    parameter aIntSize = 1;
+    parameter aSize = M*K*aIntSize;
+
+    parameter bStart = aStart + aSize;
+    parameter bIntSize = 2;
+    parameter bSize = K*N*bIntSize;
+
+    parameter cStart = bStart + bSize;
+    parameter cIntSize = 4;
+    parameter cSize = M*N*cIntSize;
+
+    int pa;
+    int pb;
+    int pc;
+    int s;
+    int j;
+    int k;
+
+    task matrix_mull_sim;
+        pa = aStart;
+        pc = cStart;
+        for (int i=0; i<M; ++i) begin
+            for (j=0; j<N; ++j) begin
+                pb = bStart;
+                s = 0;
+                for (k=0; k<K; ++k) begin
+                    // a
+                    cpu_address_buff = pa + k*aIntSize;
+                    READ8;
+                    s += local_storage[7:0];
+
+                    //b 
+                    cpu_address_buff = pb + j*bIntSize;
+                    READ16;
+                    s += local_storage[16:0];
+                    
+                    pb += N;
+                end
+                cpu_address_buff = pc + j*cIntSize;
+                data_to_write = s;
+                WRITE8;
+            end
+            pa += K;
+            pc += N;
+        end
+    endtask
+
     // Place for test calls
     initial begin
         delay;
         
-        read_write_test;
+        // read_write_test;
 
-        invalidate_test;
+        // invalidate_test;
 
-        eviction_test;
+        // eviction_test;
+        
+        matrix_mull_sim;
 
-        cache_dump_buff = 1;
-        delay;
-        cache_dump_buff = 0;
-
-        mem_dump_buff = 1;
-        delay;
-        mem_dump_buff = 0;
+        dump_all;
 
         $finish();
     end

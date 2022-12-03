@@ -65,7 +65,7 @@ class Cache:
         if (arrayNum == 0):
             return aStart + aIntSize*(M*i + j)
         elif (arrayNum == 1):
-            return bStart + bIntSize*(M*i + j)
+            return bStart + bIntSize*(K*i + j)
         elif (arrayNum == 2):
             return cStart + cIntSize*(M*i + j)
         pass
@@ -75,10 +75,10 @@ def simulate(cache):
     for i in range(M):
         for j in range(N):
             for k in range(K):
-                cache.req(0, i, k)
-                cache.req(1, k, j)
+                cache.req(0, i, k)  # a
+                cache.req(1, k, j)  # b
 
-            cache.req(2, i, j)
+            cache.req(2, i, j)  # c
 
 
 def main():

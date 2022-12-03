@@ -57,6 +57,11 @@ module cache#(
     reg [BUS_SIZE-1:0] mem_data_buff;
     reg [2-1:0] mem_command_buff;
 
+    // Analytic
+    real req;
+    real hit;
+
+    // Tasks
     task delay;
         begin
             @(negedge clk);
@@ -78,13 +83,13 @@ module cache#(
     endtask
 
     task replace_from_MM;
-        // set
+        // command
         mem_command_buff = C2_READ;
         delay;
         mem_command_buff = 'z;
         wait_for_resp;
 
-        // read
+        // data
         for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
             mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data;
             delay;
@@ -93,15 +98,14 @@ module cache#(
         // restore
         mem_command_buff = C2_NOP;
         
-        // try to write in cache storage
         if (valid_array[cpu_set_buff][0] == 0) begin
             index_in_set = 0;
             store;
         end else if (valid_array[cpu_set_buff][1] == 0) begin
             index_in_set = 1;
             store;
-        end else begin // evict
-            // LRU
+        end else begin
+            // evict if no empty space 
             index_in_set = last_used_array[cpu_set_buff];
             evict_if_dirty;
         
@@ -111,18 +115,19 @@ module cache#(
     endtask 
 
     task write_to_MM;
-        // set
+        // command
         mem_command_buff = C2_WRITE;
         delay;
         mem_command_buff = 'z;
         mem_data_buff = data_array[cpu_set_buff][index_in_set][0 +: BUS_SIZE];
         wait_for_resp;
 
-        // write
+        // data
         for (int i=1; i<CACHE_LINE_SIZE/2; i=i+1) begin
             mem_data_buff = data_array[cpu_set_buff][index_in_set][BUS_SIZE*i +: BUS_SIZE];
             delay;
         end
+
         // restore
         mem_command_buff = C2_NOP;
         mem_data_buff = 'z;
@@ -176,6 +181,7 @@ module cache#(
     task dump_to_console;
         f = $fopen("cache.dump", "w");
         if (f) begin
+            $display("req: %d\nhits: %d\nrate: %f", req, hit, hit/req);
             $fdisplay(f,"$$$$$$ CACHE DUMP $$$$$$");
             for (int i=0; i<CACHE_SETS_COUNT; i=i+1) begin
                 $fdisplay(f,"== SET 0x%0h\t==", i);
@@ -224,13 +230,17 @@ module cache#(
         end else if (dump) begin
             dump_to_console;
         end else if (cpu_command == C1_READ8 || cpu_command == C1_READ16 || cpu_command == C1_READ32) begin
+            req = req + 1;
+
             cur_cpu_command = cpu_command;
             read_cpu_address;
 
             if (valid_array[cpu_set_buff][0] == 1 && tag_array[cpu_set_buff][0] == cpu_tag_buff) begin
+                hit = hit + 1;
                 index_in_set = 0;
                 read_from_storage;
             end else if (valid_array[cpu_set_buff][1] == 1 && tag_array[cpu_set_buff][1] == cpu_tag_buff) begin
+                hit = hit + 1;
                 index_in_set = 1;
                 read_from_storage;
             end else begin
@@ -253,6 +263,8 @@ module cache#(
             cur_cpu_command = 'z;
 
         end else if (cpu_command == C1_WRITE8 || cpu_command == C1_WRITE16 || cpu_command == C1_WRITE32_RESP) begin
+            req = req + 1;
+
             cur_cpu_command = cpu_command;
             cpu_data_to_write[0 +: BUS_SIZE] = cpu_data;
 
@@ -263,9 +275,11 @@ module cache#(
             end
 
             if (valid_array[cpu_set_buff][0] == 1 && tag_array[cpu_set_buff][0] == cpu_tag_buff) begin
+                hit = hit + 1;
                 index_in_set = 0;
                 write_to_storage;
             end else if (valid_array[cpu_set_buff][1] == 1 && tag_array[cpu_set_buff][1] == cpu_tag_buff) begin
+                hit = hit + 1;
                 index_in_set = 1;
                 write_to_storage;
             end else begin

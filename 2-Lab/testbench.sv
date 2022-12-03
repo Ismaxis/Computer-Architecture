@@ -69,8 +69,8 @@ module testbench ();
     end
 
     initial begin
-        $dumpfile("dump_cache.vcd"); 
-        $dumpvars;
+        // $dumpfile("dump_cache.vcd"); 
+        // $dumpvars;
     end
 
 endmodule
