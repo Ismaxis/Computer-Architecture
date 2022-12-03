@@ -6,6 +6,7 @@ module cache#(
     ) (
     input clk,
     input reset,
+    input dump,
     input [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] cpu_address,
     inout [BUS_SIZE-1:0] cpu_data,
     inout [3-1:0] cpu_command,
@@ -171,6 +172,28 @@ module cache#(
         update_flags;
     endtask
 
+    task dump_to_console;
+        $display("$$$$$$ CACHE DUMP $$$$$$");
+        for (int i=0; i<CACHE_SETS_COUNT; i=i+1) begin
+            $display("__ set %0d __", i);
+            $display("-- %0d way --", 0);
+            $display("valid: %b", valid_array[i][0]);
+            if (valid_array[i][0]) begin
+                $display("dirty: %b", dirty_array[i][0]);
+                $display("tag:   %b", tag_array[i][0]);
+                $display("data:  %b", data_array[i][0]);
+            end
+            $display("-- %0d way --", 1);
+            $display("valid: %b", valid_array[i][1]);
+            if (valid_array[i][1]) begin
+                $display("dirty: %b", dirty_array[i][1]);
+                $display("tag:   %b", tag_array[i][1]);
+                $display("data:  %b", data_array[i][1]);
+            end
+            $display("");
+        end
+    endtask
+
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             for (int i=0; i<CACHE_SETS_COUNT; i=i+1) begin
@@ -189,6 +212,8 @@ module cache#(
             cur_cpu_command   =  0;
             mem_command_buff  = 'z;
             mem_data_buff     = 'z;
+        end else if (dump) begin
+            dump_to_console;
         end else if (cpu_command == C1_READ8 || cpu_command == C1_READ16 || cpu_command == C1_READ32) begin
             cur_cpu_command = cpu_command;
             read_cpu_address;

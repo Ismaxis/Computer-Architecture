@@ -6,6 +6,7 @@ module mem #(
     ) (
     input clk,
     input reset,
+    input dump,
     input [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] address,
     inout [BUS_SIZE-1:0] data,
     inout [2-1:0] command
@@ -39,6 +40,14 @@ module mem #(
         command_buff = C2_RESPONSE;
     endtask
 
+    task dump_to_console;
+        $display("$$$$$$ MEM DUMP $$$$$$");
+        for (int i=0; i<99; i=i+1) begin
+            $display("%0d data: %b", i, storage[i]);
+            $display("");
+        end
+    endtask
+
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             for (int i = 0; i < 99; i=i+1) begin
@@ -46,6 +55,8 @@ module mem #(
             end
             data_buff = 'z;
             command_buff = 'z;
+        end else if (dump) begin
+            dump_to_console;
         end else begin
             if (command == C2_READ) begin
                 wait_and_response;

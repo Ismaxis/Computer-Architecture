@@ -5,6 +5,8 @@ module cpu #(
     ) (
 
     input clk,
+    output cache_dump,
+    output mem_dump,
     output [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] address,
     inout [BUS_SIZE-1:0] data,
     inout [3-1:0] command
@@ -26,6 +28,9 @@ module cpu #(
     reg [3-1:0] cpu_command_buff;
     reg [BUS_SIZE-1:0] recieved_data;
     reg [BUS_SIZE*2-1:0] local_storage;
+
+    reg cache_dump_buff;
+    reg mem_dump_buff;
 
     task delay;
         begin
@@ -112,6 +117,8 @@ module cpu #(
         cpu_command_buff = 'z;
         recieved_data = 0;
         data_buff = 'z;
+        cache_dump_buff = 0;
+        mem_dump_buff = 0;
     end
 
     task read_write_test;
@@ -339,11 +346,21 @@ module cpu #(
 
         eviction_test;
 
+        cache_dump_buff = 1;
+        delay;
+        cache_dump_buff = 0;
+
+        mem_dump_buff = 1;
+        delay;
+        mem_dump_buff = 0;
+
         $finish();
     end
 
     assign address = address_bus_buff;
     assign data = data_buff;
     assign command = cpu_command_buff;
+    assign cache_dump = cache_dump_buff;
+    assign mem_dump = mem_dump_buff;
     
 endmodule

@@ -9,21 +9,47 @@ module testbench ();
     wire [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] mem_address;
     wire [BUS_SIZE-1:0] mem_data;
     wire [2-1:0] mem_command;
+    wire cache_dump;
+    wire mem_dump;
 
     reg clk;
     reg reset;
 
 
     cpu #(MEM_ADDR_SIZE, BUS_SIZE, CACHE_OFFSET_SIZE) 
-    cpu (clk, cpu_address, cpu_data, cpu_command);
+    cpu (
+        .clk(clk),
+        .cache_dump(cache_dump),
+        .mem_dump(mem_dump),
+        .address(cpu_address), 
+        .data(cpu_data), 
+        .command(cpu_command)
+        );
 
     cache #(BUS_SIZE, MEM_ADDR_SIZE, CACHE_OFFSET_SIZE, CACHE_LINE_SIZE)
-    cache (clk, reset, 
-    cpu_address, cpu_data, cpu_command,
-    mem_address, mem_data, mem_command);
+    cache (
+        .clk(clk), 
+        .reset(reset), 
+        .dump(cache_dump), 
+        
+        .cpu_address(cpu_address), 
+        .cpu_data(cpu_data), 
+        .cpu_command(cpu_command),
+        
+        .mem_address(mem_address), 
+        .mem_data(mem_data), 
+        .mem_command(mem_command)
+        );
 
     mem #(MEM_ADDR_SIZE, BUS_SIZE, CACHE_OFFSET_SIZE, CACHE_LINE_SIZE) 
-    mem(clk, reset, mem_address, mem_data, mem_command);
+    mem(
+        .clk(clk), 
+        .reset(reset), 
+        .dump(mem_dump),
+        .address(mem_address), 
+        .data(mem_data), 
+        .command(mem_command)
+        );
 
      task delay;
         begin
@@ -39,11 +65,6 @@ module testbench ();
 
         forever begin
             #1 clk = ~clk;
-            // $display("addr: %b", mem_address);
-            // $display("data: %b", mem_data);
-            // $display("cache.: %b", cache.mem_data_buff);
-            // $display("mem.: %b", mem.data_buff);
-            // $display("command: %b", mem_command);
         end
     end
 
