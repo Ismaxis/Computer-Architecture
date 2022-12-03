@@ -40,12 +40,21 @@ module mem #(
         command_buff = C2_RESPONSE;
     endtask
 
+    int f;
     task dump_to_console;
-        $display("$$$$$$ MEM DUMP $$$$$$");
-        for (int i=0; i<99; i=i+1) begin
-            $display("%0d data: %b", i, storage[i]);
-            $display("");
+        f = $fopen("mem.dump", "w");
+        if (f) begin
+            
+            $fdisplay(f, "$$$$$$ MEM DUMP $$$$$$");
+            for (int i=0; i<99; i=i+1) begin
+                $fdisplay(f, "0x%0H:\t0x%h\n", i, storage[i]);
+            end
+
+            $display("Mem dumped successful. Check mem.dump");
+        end else begin
+            $display("Error while mem dump");
         end
+        $fclose(f);
     endtask
 
     always @(posedge clk or posedge reset) begin

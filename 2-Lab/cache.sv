@@ -172,26 +172,35 @@ module cache#(
         update_flags;
     endtask
 
+    int f;
     task dump_to_console;
-        $display("$$$$$$ CACHE DUMP $$$$$$");
-        for (int i=0; i<CACHE_SETS_COUNT; i=i+1) begin
-            $display("__ set %0d __", i);
-            $display("-- %0d way --", 0);
-            $display("valid: %b", valid_array[i][0]);
-            if (valid_array[i][0]) begin
-                $display("dirty: %b", dirty_array[i][0]);
-                $display("tag:   %b", tag_array[i][0]);
-                $display("data:  %b", data_array[i][0]);
+        f = $fopen("cache.dump", "w");
+        if (f) begin
+            $fdisplay(f,"$$$$$$ CACHE DUMP $$$$$$");
+            for (int i=0; i<CACHE_SETS_COUNT; i=i+1) begin
+                $fdisplay(f,"== SET 0x%0h\t==", i);
+
+                $fdisplay(f,"way %0d\nvalid: %b", 0, valid_array[i][0]);
+                if (valid_array[i][0]) begin
+                    $fdisplay(f,"dirty: %b", dirty_array[i][0]);
+                    $fdisplay(f,"tag:   0x%h", tag_array[i][0]);
+                    $fdisplay(f,"data:  0x%h", data_array[i][0]);
+                end
+
+                $fdisplay(f,"way %0d\nvalid: %b", 1, valid_array[i][1]);
+                if (valid_array[i][1]) begin
+                    $fdisplay(f,"dirty: %b", dirty_array[i][1]);
+                    $fdisplay(f,"tag:   0x%h", tag_array[i][1]);
+                    $fdisplay(f,"data:  0x%h", data_array[i][1]);
+                end
+                $fdisplay(f,"");
             end
-            $display("-- %0d way --", 1);
-            $display("valid: %b", valid_array[i][1]);
-            if (valid_array[i][1]) begin
-                $display("dirty: %b", dirty_array[i][1]);
-                $display("tag:   %b", tag_array[i][1]);
-                $display("data:  %b", data_array[i][1]);
-            end
-            $display("");
+
+            $display("Cache dumped successful. Check cache.dump");
+        end else begin
+            $display("Error while cache dump");
         end
+        $fclose(f);
     endtask
 
     always @(posedge clk or posedge reset) begin

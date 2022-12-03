@@ -3,3 +3,4 @@
 /HelloWorld
 dump_cache_old.vcd
 dump_cache_optimized_write_MM.vcd
+*.dump
