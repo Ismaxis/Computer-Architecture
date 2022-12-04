@@ -20,7 +20,7 @@ module cache#(
     parameter CACHE_LINE_COUNT  = 64;
 
     parameter CACHE_SET_SIZE    = $clog2(CACHE_SETS_COUNT);
-    parameter CACHE_TAG_SIZE    = 10; //CACHE_LINE_SIZE - CACHE_SET_SIZE - CACHE_OFFSET_SIZE;
+    parameter CACHE_TAG_SIZE    = 10;
     parameter CACHE_SIZE        = CACHE_LINE_COUNT * CACHE_LINE_SIZE;
     parameter CACHE_SETS_COUNT  = CACHE_LINE_COUNT/CACHE_WAY; 
 
@@ -73,6 +73,18 @@ module cache#(
             @(posedge clk);
         end
     endtask	
+
+    task hit_resp_delay;
+        repeat(4) begin
+            delay;
+        end
+    endtask
+
+    task miss_req_delay;
+        repeat(3) begin
+            delay;
+        end
+    endtask
 
     task wait_for_resp;
         while (mem_command !== C2_RESPONSE) begin 
@@ -253,16 +265,19 @@ module cache#(
 
             cur_cpu_command = cpu_command;
             read_cpu_address;
-
+    
             if (valid_array[cpu_set_buff][0] == 1 && tag_array[cpu_set_buff][0] == cpu_tag_buff) begin
+                hit_resp_delay;
                 hit = hit + 1;
                 index_in_set = 0;
                 read_from_storage;
             end else if (valid_array[cpu_set_buff][1] == 1 && tag_array[cpu_set_buff][1] == cpu_tag_buff) begin
+                hit_resp_delay;
                 hit = hit + 1;
                 index_in_set = 1;
                 read_from_storage;
             end else begin
+                miss_req_delay;
                 replace_from_MM;
                 read_from_storage;
             end
@@ -291,14 +306,17 @@ module cache#(
             end
 
             if (valid_array[cpu_set_buff][0] == 1 && tag_array[cpu_set_buff][0] == cpu_tag_buff) begin
+                hit_resp_delay;
                 hit = hit + 1;
                 index_in_set = 0;
                 write_to_storage;
             end else if (valid_array[cpu_set_buff][1] == 1 && tag_array[cpu_set_buff][1] == cpu_tag_buff) begin
+                hit_resp_delay;
                 hit = hit + 1;
                 index_in_set = 1;
                 write_to_storage;
             end else begin
+                miss_req_delay;
                 replace_from_MM;
                 write_to_storage;
                 delay;

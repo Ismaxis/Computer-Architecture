@@ -14,7 +14,7 @@ module mem #(
 
     // 512KB = 2^9 * 2^10 = 2^19 = 2^15 lines * 2^4 bits in each line (16 8-bit words)
     parameter MEM_SIZE = 1 << (MEM_ADDR_SIZE-CACHE_OFFSET_SIZE); // 2^15 cache lines
-    parameter RESPONSE_TIME = 5;
+    parameter RESPONSE_TIME = 100;
 
     localparam  C2_NOP      = 3'd0,
                 C2_RESPONSE = 3'd1,
