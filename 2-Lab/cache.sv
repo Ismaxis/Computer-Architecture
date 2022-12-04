@@ -204,10 +204,6 @@ module cache#(
         $fclose(f);
     endtask
 
-    int g;
-    initial begin
-        g = $fopen("miss", "w");
-    end
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
@@ -228,7 +224,6 @@ module cache#(
             mem_command_buff  = 'z;
             mem_data_buff     = 'z;
         end else if (dump) begin
-            $fclose(g);
             dump_to_console;
         end else if (cpu_command == C1_READ8 || cpu_command == C1_READ16 || cpu_command == C1_READ32) begin
             req = req + 1;
@@ -245,7 +240,6 @@ module cache#(
                 index_in_set = 1;
                 read_from_storage;
             end else begin
-                $fdisplay(g, "%b%b r", cpu_tag_buff, cpu_set_buff);
                 replace_from_MM;
                 read_from_storage;
             end
@@ -285,7 +279,6 @@ module cache#(
                 index_in_set = 1;
                 write_to_storage;
             end else begin
-                $fdisplay(g, "%b%b w", cpu_tag_buff, cpu_set_buff);
                 replace_from_MM;
                 write_to_storage;
             end
