@@ -37,6 +37,12 @@ module cpu #(
             @(negedge clk);
         end
     endtask	
+
+    task read_bus_delay;
+        begin
+            @(posedge clk);
+        end
+    endtask	
     
     task send_address;
         address_bus_buff = cpu_address_buff[MEM_ADDR_SIZE-1:CACHE_OFFSET_SIZE];
@@ -46,26 +52,30 @@ module cpu #(
     endtask
     task wait_for_resp;
         while (command !== C1_WRITE32_RESP) begin 
-            delay;
+            read_bus_delay;
         end
     endtask
 
     task READ8;
         cpu_command_buff = C1_READ8;
         READ;
-        local_storage = recieved_data;
+        local_storage = recieved_data[8-1:0];
+        delay;
     endtask
     task READ16;
         cpu_command_buff = C1_READ16;
         READ;
         local_storage = recieved_data;
+        delay;
     endtask
     task READ32;
         cpu_command_buff = C1_READ32;
         READ;
         local_storage[BUS_SIZE-1:0] = recieved_data;
-        READ;
+        read_bus_delay;
+        recieved_data = data;
         local_storage[BUS_SIZE*2-1:BUS_SIZE] = recieved_data;
+        delay;
     endtask
     task READ;
         send_address;
@@ -137,7 +147,18 @@ module cpu #(
         dump_cache;
         dump_mem;
     endtask
+    
+    task pass;
+        $display("%c[5;32mPASS%c[0m",27,27);
+    endtask
 
+    task fail;
+        $display("%c[1;31mFAIL%c[0m",27,27);
+    endtask
+
+
+    reg [19-1:0] test_addr[3-1:0];
+    reg [32-1:0] test_data[3-1:0];
     task read_write_test;
         $display("\n#############################################");
         $display("#############  READ/WRITE TEST  #############");
@@ -146,69 +167,109 @@ module cpu #(
         $display("@@@@@@@@@@@@@@");
         $display("@@@  8 bit @@@");
         $display("@@@@@@@@@@@@@@");
-        cpu_address_buff = 19'b0000000000_01110_0000;
+        test_addr[0] = 19'b0000000000_01110_0000;
+        test_data[0] = 8'b1111_0000;
+
+        cpu_address_buff = test_addr[0];
         $display("read from %b", cpu_address_buff);
         READ8;
         $display("data      %b", local_storage[8-1:0]);
         $display("----------------");
 
-        cpu_address_buff = 19'b0000000000_01110_0000;
-        data_to_write = 8'b1111_0000;
+        cpu_address_buff = test_addr[0];
+        data_to_write = test_data[0];
         $display("write to  %b", cpu_address_buff);
         $display("data      %b", data_to_write[8-1:0]);
         WRITE8;
         $display("----------------");
         
-        cpu_address_buff = 19'b0000000000_01110_0000;
+        cpu_address_buff = test_addr[0];
         $display("read from %b", cpu_address_buff);
         READ8;
-        $display("data      %b", local_storage[8-1:0]);
         $display("----------------");
 
-        $display("@@@@@@@@@@@@@@");
+        $display("\nREAD/WRITE 8 bit");
+        if (test_data[0] == local_storage[8-1:0]) begin
+            pass;
+            $display("data      %b", local_storage[8-1:0]);
+        end else begin
+            fail;
+            $display("expected  %b", test_data[0][8-1:0]);
+            $display("actual    %b", local_storage[8-1:0]);
+        end
+
+        $display("\n@@@@@@@@@@@@@@");
         $display("@@@ 16 bit @@@");
         $display("@@@@@@@@@@@@@@");
-        cpu_address_buff = 19'b0000000000_01110_0000;
+        test_addr[1] = 19'b0000000000_01110_0010;
+        test_data[1] = 16'b1111_1111_0000_0000;
+
+        cpu_address_buff = test_addr[1];
         $display("read from %b", cpu_address_buff);
         READ16;
         $display("data      %b", local_storage[16-1:0]);
         $display("----------------");
 
-        cpu_address_buff = 19'b0000000000_01110_0000;
-        data_to_write = 16'b1111_1111_0000_0000;
+        cpu_address_buff = test_addr[1];
+        data_to_write = test_data[1];
         $display("write to  %b", cpu_address_buff);
         $display("data      %b", data_to_write[16-1:0]);
         WRITE16;
         $display("----------------");
         
-        cpu_address_buff = 19'b0000000000_01110_0000;
+        cpu_address_buff = test_addr[1];
         $display("read from %b", cpu_address_buff);
         READ16;
         $display("data      %b", local_storage[16-1:0]);
         $display("----------------");
 
-        $display("@@@@@@@@@@@@@@");
+        $display("\nREAD/WRITE 16 bit");
+        if (test_data[1] == local_storage[16-1:0]) begin
+            pass;
+            $display("data      %b", local_storage[16-1:0]);
+        end else begin
+            fail;
+            $display("expected  %b", test_data[1][16-1:0]);
+            $display("actual    %b", local_storage[16-1:0]);
+        end
+
+        $display("\n@@@@@@@@@@@@@@");
         $display("@@@ 32 bit @@@");
         $display("@@@@@@@@@@@@@@");
+        test_addr[2] = 19'b0000000000_01110_0000;
+        test_data[2] = 32'b0101_0101_0101_0101_0101_0101_0101_0101;
+
+
         $display("----------------");
-        cpu_address_buff = 19'b0000000000_01110_0000;
+        cpu_address_buff = test_addr[2];
         $display("read from %b", cpu_address_buff);
         READ32;
         $display("data      %b", local_storage[32-1:0]);
         $display("----------------");
 
-        cpu_address_buff = 19'b0000000000_01110_0000;
-        data_to_write = 32'b0101_0101_0101_0101_0101_0101_0101_0101;
+        cpu_address_buff = test_addr[2];
+        data_to_write = test_data[2];
         $display("write to  %b", cpu_address_buff);
         $display("data      %b", data_to_write[32-1:0]);
         WRITE32;
         $display("----------------");
        
-        cpu_address_buff = 19'b0000000000_01110_0000;
+        cpu_address_buff = test_addr[2];
         $display("read from %b", cpu_address_buff);
         READ32;
         $display("data      %b", local_storage[32-1:0]);
         $display("----------------");
+
+        $display("\nREAD/WRITE 32 bit");
+        if (test_data[2] == local_storage[32-1:0]) begin
+            pass;
+            $display("data      %b", local_storage[32-1:0]);
+        end else begin
+            fail;
+            $display("expected  %b", test_data[2][32-1:0]);
+            $display("actual    %b", local_storage[32-1:0]);
+        end
+        $display("");
     endtask
 
     task eviction_test;
@@ -411,15 +472,15 @@ module cpu #(
     initial begin
         delay;
         
-        // read_write_test;
+        read_write_test;
 
         // invalidate_test;
 
         // eviction_test;
         
-        matrix_mull_sim;
+        // matrix_mull_sim;
 
-        dump_cache;
+        dump_all;
 
         $finish();
     end

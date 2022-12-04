@@ -50,13 +50,7 @@ module testbench ();
         .data(mem_data), 
         .command(mem_command)
         );
-
-     task delay;
-        begin
-            @(negedge clk);
-        end
-    endtask	
-
+        
     initial begin
         reset = 0;
         #1 reset = 1;
@@ -69,8 +63,8 @@ module testbench ();
     end
 
     initial begin
-        // $dumpfile("dump_cache.vcd"); 
-        // $dumpvars;
+        $dumpfile("dump_cache.vcd"); 
+        $dumpvars;
     end
 
 endmodule

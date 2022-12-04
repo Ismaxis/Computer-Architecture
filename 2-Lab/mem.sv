@@ -31,6 +31,12 @@ module mem #(
         begin
             @(negedge clk);
         end
+    endtask
+
+    task read_bus_delay;
+        begin
+            @(posedge clk);
+        end
     endtask	
 
     task wait_and_response;
@@ -46,8 +52,8 @@ module mem #(
         if (dump_f) begin
             
             $fdisplay(dump_f, "$$$$$$ MEM DUMP $$$$$$");
-            for (int i=0; i<MEM_SIZE; i=i+1) begin
-                $fdisplay(dump_f, "0x%0H:\t0x%h\n", i, storage[i]);
+            for (int i=0; i<99; i=i+1) begin
+                $fdisplay(dump_f, "0x%0H\t0x%0H\t0x%h\n", (i >> 5), i%32, storage[i]);
             end
 
             $display("Mem dumped successful. Check mem.dump");
@@ -60,7 +66,7 @@ module mem #(
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             $display("Filling the MEM...");
-            for (int i = 0; i < MEM_SIZE; i=i+1) begin
+            for (int i = 0; i < 99; i=i+1) begin
                 storage[i] = $random(SEED)>>16;
             end
             $display("MEM filled");
@@ -78,15 +84,14 @@ module mem #(
                     delay;
                 end
                 command_buff = 'z;
-                delay;
             end else if (command == C2_WRITE) begin
                 data_buff = 'z;
                 wait_and_response;
 
                 // WRITE
                 for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
+                    read_bus_delay;
                     storage[address][BUS_SIZE*i +: BUS_SIZE] = data;
-                    delay;
                 end
                 command_buff = 'z;
             end else begin

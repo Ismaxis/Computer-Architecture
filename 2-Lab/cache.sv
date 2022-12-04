@@ -68,9 +68,15 @@ module cache#(
         end
     endtask	
 
+    task read_bus_delay;
+        begin
+            @(posedge clk);
+        end
+    endtask	
+
     task wait_for_resp;
         while (mem_command !== C2_RESPONSE) begin 
-            delay;
+            read_bus_delay;
         end
     endtask
 
@@ -91,7 +97,7 @@ module cache#(
         // data
         for (int i=0; i<CACHE_LINE_SIZE/2; i=i+1) begin
             mem_line_buff[BUS_SIZE*i +: BUS_SIZE] = mem_data;
-            delay;
+            read_bus_delay;
         end
 
         // restore
@@ -122,6 +128,7 @@ module cache#(
         wait_for_resp;
 
         // data
+        delay;
         for (int i=1; i<CACHE_LINE_SIZE/2; i=i+1) begin
             mem_data_buff = data_array[cpu_set_buff][index_in_set][BUS_SIZE*i +: BUS_SIZE];
             delay;
@@ -152,6 +159,7 @@ module cache#(
 
     reg [3-1:0] cur_cpu_command;
     task read_from_storage;
+        delay;
         if (cur_cpu_command == C1_READ8) begin
             cpu_data_bus_buff = data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 8];
         end else if (cur_cpu_command == C1_READ16 || cur_cpu_command == C1_READ32) begin
@@ -190,19 +198,19 @@ module cache#(
         if (dump_f) begin
             $fdisplay(dump_f,"$$$$$$ CACHE DUMP $$$$$$");
             for (int i=0; i<CACHE_SETS_COUNT; i=i+1) begin
-                $fdisplay(dump_f,"== SET 0x%0h\t==", i);
+                $fdisplay(dump_f,"== SET 0x%0H\t==", i);
 
                 $fdisplay(dump_f,"way %0d\nvalid: %b", 0, valid_array[i][0]);
                 if (valid_array[i][0]) begin
                     $fdisplay(dump_f,"dirty: %b", dirty_array[i][0]);
-                    $fdisplay(dump_f,"tag:   0x%h", tag_array[i][0]);
+                    $fdisplay(dump_f,"tag:   0x%0H", tag_array[i][0]);
                     $fdisplay(dump_f,"data:  0x%h", data_array[i][0]);
                 end
 
                 $fdisplay(dump_f,"way %0d\nvalid: %b", 1, valid_array[i][1]);
                 if (valid_array[i][1]) begin
                     $fdisplay(dump_f,"dirty: %b", dirty_array[i][1]);
-                    $fdisplay(dump_f,"tag:   0x%h", tag_array[i][1]);
+                    $fdisplay(dump_f,"tag:   0x%0H", tag_array[i][1]);
                     $fdisplay(dump_f,"data:  0x%h", data_array[i][1]);
                 end
                 $fdisplay(dump_f,"");
@@ -257,15 +265,12 @@ module cache#(
             end
 
             cpu_command_buff = C1_WRITE32_RESP;
-            delay;
 
             if (cur_cpu_command == C1_READ32) begin
-                delay;
                 cpu_offset_buff += 2;
                 read_from_storage;
-                delay;
-            end
-
+            end 
+            delay;
             cpu_command_buff = 'z;
             cpu_data_bus_buff = 'z;
             cur_cpu_command = 'z;
