@@ -1,3 +1,7 @@
+`include "cache.sv"
+`include "cpu.sv"
+`include "mem.sv"
+
 module testbench ();
     parameter BUS_SIZE = 16;
     parameter MEM_ADDR_SIZE = 10 + 9;   // log2(MEM_SIZE)
@@ -60,11 +64,6 @@ module testbench ();
         forever begin
             #1 clk = ~clk;
         end
-    end
-
-    initial begin
-        $dumpfile("dump_cache.vcd"); 
-        $dumpvars;
     end
 
 endmodule

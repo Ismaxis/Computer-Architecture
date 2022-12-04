@@ -153,6 +153,81 @@ module cpu #(
         dump_mem;
     endtask
     
+    parameter M = 19'd64;
+    parameter N = 19'd60;
+    parameter K = 19'd32;
+    
+    parameter aStart = 19'd0;
+    parameter aIntSize = 19'd1;
+    parameter aSize = M*K*aIntSize;
+
+    parameter bStart = aStart + aSize;
+    parameter bIntSize = 19'd2;
+    parameter bSize = K*N*bIntSize;
+
+    parameter cStart = bStart + bSize;
+    parameter cIntSize = 19'd4;
+    parameter cSize = M*N*cIntSize;
+
+    int pa;
+    int pb;
+    int pc;
+    int s;
+    int j;
+    int k;
+
+    task matrix_mull_sim;
+        $display("Simulation started");
+        pa = aStart;
+        pc = cStart;
+        for (int i=0; i<M; ++i) begin
+            for (j=0; j<N; ++j) begin
+                pb = bStart;
+                s = 0;
+                for (k=0; k<K; ++k) begin
+                    // a
+                    cpu_address_buff = pa + k*aIntSize;
+                    READ8;
+                    s += local_storage[7:0];
+
+                    //b 
+                    cpu_address_buff = pb + j*bIntSize;
+                    READ16;
+                    s += local_storage[15:0];
+                    
+                    pb += N*bIntSize;
+                end
+                cpu_address_buff = pc + j*cIntSize;
+                data_to_write = s;
+                WRITE32;
+            end
+            pa += K*aIntSize;
+            pc += N*cIntSize;
+        end
+        $display("Simulation finished");
+    endtask
+
+    // Place for test calls
+    initial begin 
+        matrix_mull_sim;
+
+        dump_all;
+        
+        read_write_test;
+
+        invalidate_test;
+
+        eviction_test;
+
+        $finish();
+    end
+
+    assign address = address_bus_buff;
+    assign data = data_buff;
+    assign command = cpu_command_buff;
+    assign cache_dump = cache_dump_buff;
+    assign mem_dump = mem_dump_buff;
+    
     task pass;
         $display("%c[5;32mPASS%c[0m",27,27);
     endtask
@@ -160,7 +235,6 @@ module cpu #(
     task fail;
         $display("%c[1;31mFAIL%c[0m",27,27);
     endtask
-
 
     reg [19-1:0] test_addr;
     reg [32-1:0] test_data;
@@ -197,7 +271,6 @@ module cpu #(
         $display("\nREAD/WRITE 8 bit");
         if (test_data == local_storage[8-1:0]) begin
             pass;
-            $display("data      %b", local_storage[8-1:0]);
         end else begin
             fail;
             $display("expected  %b", test_data[8-1:0]);
@@ -232,7 +305,6 @@ module cpu #(
         $display("\nREAD/WRITE 16 bit");
         if (test_data == local_storage[16-1:0]) begin
             pass;
-            $display("data      %b", local_storage[16-1:0]);
         end else begin
             fail;
             $display("expected  %b", test_data[16-1:0]);
@@ -269,7 +341,6 @@ module cpu #(
         $display("\nREAD/WRITE 32 bit");
         if (test_data == local_storage[32-1:0]) begin
             pass;
-            $display("data      %b", local_storage[32-1:0]);
         end else begin
             fail;
             $display("expected  %b", test_data[32-1:0]);
@@ -376,7 +447,6 @@ module cpu #(
         $display("EVICTION FIRST");
         if (evtest_data[0] == local_storage[32-1:0]) begin
             pass;
-            $display("data      %b", local_storage[32-1:0]);
         end else begin
             fail;
             $display("expected  %b", evtest_data[0][32-1:0]);
@@ -396,7 +466,6 @@ module cpu #(
         $display("EVICTION SECOND");
         if (evtest_data[1] == local_storage[32-1:0]) begin
             pass;
-            $display("data      %b", local_storage[32-1:0]);
         end else begin
             fail;
             $display("expected  %b", evtest_data[1][32-1:0]);
@@ -416,7 +485,6 @@ module cpu #(
         $display("EVICTION THIRD");
         if (evtest_data[2] == local_storage[32-1:0]) begin
             pass;
-            $display("data      %b", local_storage[32-1:0]);
         end else begin
             fail;
             $display("expected  %b", evtest_data[2][32-1:0]);
@@ -466,7 +534,6 @@ module cpu #(
         $display("\nINV");
         if (test_data[8-1:0] == local_storage[8-1:0]) begin
             pass;
-            $display("data      %b", local_storage[32-1:0]);
         end else begin
             fail;
             $display("expected  %b", test_data[32-1:0]);
@@ -474,81 +541,4 @@ module cpu #(
         end
     endtask
 
-    parameter M = 19'd64;
-    parameter N = 19'd60;
-    parameter K = 19'd32;
-    
-    parameter aStart = 19'd0;
-    parameter aIntSize = 19'd1;
-    parameter aSize = M*K*aIntSize;
-
-    parameter bStart = aStart + aSize;
-    parameter bIntSize = 19'd2;
-    parameter bSize = K*N*bIntSize;
-
-    parameter cStart = bStart + bSize;
-    parameter cIntSize = 19'd4;
-    parameter cSize = M*N*cIntSize;
-
-    int pa;
-    int pb;
-    int pc;
-    int s;
-    int j;
-    int k;
-
-    task matrix_mull_sim;
-        $display("Simulation started");
-        pa = aStart;
-        pc = cStart;
-        for (int i=0; i<M; ++i) begin
-            for (j=0; j<N; ++j) begin
-                pb = bStart;
-                s = 0;
-                for (k=0; k<K; ++k) begin
-                    // a
-                    cpu_address_buff = pa + k*aIntSize;
-                    READ8;
-                    s += local_storage[7:0];
-
-                    //b 
-                    cpu_address_buff = pb + j*bIntSize;
-                    READ16;
-                    s += local_storage[15:0];
-                    
-                    pb += N*bIntSize;
-                end
-                cpu_address_buff = pc + j*cIntSize;
-                data_to_write = s;
-                WRITE32;
-            end
-            pa += K*aIntSize;
-            pc += N*cIntSize;
-        end
-        $display("Simulation finished");
-    endtask
-
-    // Place for test calls
-    initial begin
-        delay;
-        
-        // read_write_test;
-
-        // invalidate_test;
-
-        // eviction_test;
-        
-        matrix_mull_sim;
-
-        dump_cache;
-
-        $finish();
-    end
-
-    assign address = address_bus_buff;
-    assign data = data_buff;
-    assign command = cpu_command_buff;
-    assign cache_dump = cache_dump_buff;
-    assign mem_dump = mem_dump_buff;
-    
 endmodule

@@ -183,10 +183,12 @@ module cache#(
 
     int hit_stat_file;
     task dump_hit_stat;
+        $display("\nHIT statistic:");
         $display("req: %d\nhits: %d\nrate: %f", req, hit, hit/req);
-        hit_stat_file = $fopen("analytic/hit_stat.dump", "w");
+        hit_stat_file = $fopen("hit_stat.dump", "w");
         if (hit_stat_file) begin
             $fdisplay(hit_stat_file, "%d\n%d\n", req, hit);
+            $display("HIT stat dumped to hit_stat.dump.\n");
         end else begin
             $display("Error while hit stat dump");
         end
@@ -201,14 +203,14 @@ module cache#(
             for (int i=0; i<CACHE_SETS_COUNT; i=i+1) begin
                 $fdisplay(dump_f,"== SET 0x%0H\t==", i);
 
-                $fdisplay(dump_f,"way %0d\nvalid: %b", 0, valid_array[i][0]);
+                $fdisplay(dump_f,"WAY %0d\nvalid: %b", 0, valid_array[i][0]);
                 if (valid_array[i][0]) begin
                     $fdisplay(dump_f,"dirty: %b", dirty_array[i][0]);
                     $fdisplay(dump_f,"tag:   0x%0H", tag_array[i][0]);
                     $fdisplay(dump_f,"data:  0x%h", data_array[i][0]);
                 end
 
-                $fdisplay(dump_f,"way %0d\nvalid: %b", 1, valid_array[i][1]);
+                $fdisplay(dump_f,"WAY %0d\nvalid: %b", 1, valid_array[i][1]);
                 if (valid_array[i][1]) begin
                     $fdisplay(dump_f,"dirty: %b", dirty_array[i][1]);
                     $fdisplay(dump_f,"tag:   0x%0H", tag_array[i][1]);

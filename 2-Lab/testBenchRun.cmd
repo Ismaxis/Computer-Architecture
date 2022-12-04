@@ -1,1 +1,1 @@
-iverilog -g2012 -o .\out\analytic.out .\testbench.sv .\cpu.sv .\cache.sv .\mem.sv && vvp .\out\Analytic.out
+iverilog -g2012 -o testbench.out testbench.sv && vvp testbench.out

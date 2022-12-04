@@ -25,8 +25,6 @@ module mem #(
     reg [BUS_SIZE-1:0] data_buff; // single bus
     reg [2-1:0] command_buff;
 
-    integer SEED = 225526;
-
     task delay;
         begin
             @(negedge clk);
@@ -52,8 +50,9 @@ module mem #(
         if (dump_f) begin
             
             $fdisplay(dump_f, "$$$$$$ MEM DUMP $$$$$$");
-            for (int i = 0; i < 99; i=i+1) begin
-                $fdisplay(dump_f, "0x%0H\t0x%0H\t0x%h\n", (i >> 5), i%32, storage[i]);
+            $fdisplay(dump_f, "TAG     SET     DATA");
+            for (int i = 0; i < MEM_SIZE; i=i+1) begin
+                $fdisplay(dump_f, "0x%0H \t0x%0H \t0x%h\n", (i >> 5), i%32, storage[i]);
             end
 
             $display("Mem dumped successful. Check mem.dump");
@@ -63,11 +62,16 @@ module mem #(
         $fclose(dump_f);
     endtask
 
+
+    integer SEED = 225526;
+    int j;
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             $display("Filling the MEM...");
-            for (int i = 0; i < 99; i=i+1) begin
-                storage[i] = $random(SEED)>>16;
+            for (int i = 0; i < MEM_SIZE; i=i+1) begin
+                for (j=0; j<CACHE_LINE_SIZE; ++j) begin
+                    storage[i][8*j +: 8] = $random(SEED)>>16;
+                end
             end
             $display("MEM filled");
             data_buff = 'z;
