@@ -50,7 +50,7 @@ module testbench ();
         .data(mem_data), 
         .command(mem_command)
         );
-        
+
     initial begin
         reset = 0;
         #1 reset = 1;

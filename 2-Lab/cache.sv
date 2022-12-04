@@ -169,6 +169,7 @@ module cache#(
     endtask 
 
     task write_to_storage;
+        delay;
         if (cur_cpu_command == C1_WRITE8) begin
             data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 8] = cpu_data_to_write;
         end else if (cur_cpu_command == C1_WRITE16) begin
@@ -298,6 +299,7 @@ module cache#(
             end else begin
                 replace_from_MM;
                 write_to_storage;
+                delay;
             end
 
             cpu_command_buff = C1_WRITE32_RESP;
@@ -321,6 +323,7 @@ module cache#(
             delay;
             cpu_command_buff = 'z;
             cur_cpu_command  = 'z;
+
         end
     end
 

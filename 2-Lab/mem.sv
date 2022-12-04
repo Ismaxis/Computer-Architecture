@@ -14,7 +14,7 @@ module mem #(
 
     // 512KB = 2^9 * 2^10 = 2^19 = 2^15 lines * 2^4 bits in each line (16 8-bit words)
     parameter MEM_SIZE = 1 << (MEM_ADDR_SIZE-CACHE_OFFSET_SIZE); // 2^15 cache lines
-    parameter RESPONSE_TIME = 100;
+    parameter RESPONSE_TIME = 5;
 
     localparam  C2_NOP      = 3'd0,
                 C2_RESPONSE = 3'd1,
@@ -52,7 +52,7 @@ module mem #(
         if (dump_f) begin
             
             $fdisplay(dump_f, "$$$$$$ MEM DUMP $$$$$$");
-            for (int i=0; i<99; i=i+1) begin
+            for (int i = 0; i < 99; i=i+1) begin
                 $fdisplay(dump_f, "0x%0H\t0x%0H\t0x%h\n", (i >> 5), i%32, storage[i]);
             end
 

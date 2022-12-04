@@ -87,10 +87,12 @@ module cpu #(
     task WRITE8;
         cpu_command_buff = C1_WRITE8;
         WRITE;
+        delay;
     endtask
     task WRITE16;
         cpu_command_buff = C1_WRITE16;
         WRITE;
+        delay;
     endtask
     task WRITE32;
         cpu_command_buff = C1_WRITE32_RESP;
@@ -106,6 +108,7 @@ module cpu #(
         cpu_command_buff = 'z;
         wait_for_resp;
         data_buff = 'z;
+        delay;
     endtask
     task WRITE;
         data_buff = data_to_write;
@@ -145,6 +148,7 @@ module cpu #(
     endtask
 
     task dump_all;
+        delay;
         dump_cache;
         dump_mem;
     endtask
@@ -187,6 +191,7 @@ module cpu #(
         cpu_address_buff = test_addr;
         $display("read from %b", cpu_address_buff);
         READ8;
+        $display("data      %b", local_storage[8-1:0]);
         $display("----------------");
 
         $display("\nREAD/WRITE 8 bit");
@@ -459,7 +464,7 @@ module cpu #(
         $display("----------------");
 
         $display("\nINV");
-        if (test_data == local_storage[32-1:0]) begin
+        if (test_data[8-1:0] == local_storage[8-1:0]) begin
             pass;
             $display("data      %b", local_storage[32-1:0]);
         end else begin
@@ -527,15 +532,15 @@ module cpu #(
     initial begin
         delay;
         
-        read_write_test;
+        // read_write_test;
 
-        invalidate_test;
+        // invalidate_test;
 
-        eviction_test;
+        // eviction_test;
         
-        // matrix_mull_sim;
+        matrix_mull_sim;
 
-        dump_all;
+        dump_cache;
 
         $finish();
     end
