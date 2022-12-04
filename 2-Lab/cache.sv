@@ -172,36 +172,47 @@ module cache#(
         last_used_array[cpu_set_buff] = ~index_in_set;
     endtask
 
-    int f;
-    task dump_to_console;
-        f = $fopen("cache.dump", "w");
-        if (f) begin
-            $display("req: %d\nhits: %d\nrate: %f", req, hit, hit/req);
-            $fdisplay(f,"$$$$$$ CACHE DUMP $$$$$$");
+    int hit_stat_file;
+    task dump_hit_stat;
+        $display("req: %d\nhits: %d\nrate: %f", req, hit, hit/req);
+        hit_stat_file = $fopen("analytic/hit_stat.dump", "w");
+        if (hit_stat_file) begin
+            $fdisplay(hit_stat_file, "%d\n%d\n", req, hit);
+        end else begin
+            $display("Error while hit stat dump");
+        end
+        $fclose(hit_stat_file);
+    endtask
+
+    int dump_f;
+    task dump_to_file;
+        dump_f = $fopen("cache.dump", "w");
+        if (dump_f) begin
+            $fdisplay(dump_f,"$$$$$$ CACHE DUMP $$$$$$");
             for (int i=0; i<CACHE_SETS_COUNT; i=i+1) begin
-                $fdisplay(f,"== SET 0x%0h\t==", i);
+                $fdisplay(dump_f,"== SET 0x%0h\t==", i);
 
-                $fdisplay(f,"way %0d\nvalid: %b", 0, valid_array[i][0]);
+                $fdisplay(dump_f,"way %0d\nvalid: %b", 0, valid_array[i][0]);
                 if (valid_array[i][0]) begin
-                    $fdisplay(f,"dirty: %b", dirty_array[i][0]);
-                    $fdisplay(f,"tag:   0x%h", tag_array[i][0]);
-                    $fdisplay(f,"data:  0x%h", data_array[i][0]);
+                    $fdisplay(dump_f,"dirty: %b", dirty_array[i][0]);
+                    $fdisplay(dump_f,"tag:   0x%h", tag_array[i][0]);
+                    $fdisplay(dump_f,"data:  0x%h", data_array[i][0]);
                 end
 
-                $fdisplay(f,"way %0d\nvalid: %b", 1, valid_array[i][1]);
+                $fdisplay(dump_f,"way %0d\nvalid: %b", 1, valid_array[i][1]);
                 if (valid_array[i][1]) begin
-                    $fdisplay(f,"dirty: %b", dirty_array[i][1]);
-                    $fdisplay(f,"tag:   0x%h", tag_array[i][1]);
-                    $fdisplay(f,"data:  0x%h", data_array[i][1]);
+                    $fdisplay(dump_f,"dirty: %b", dirty_array[i][1]);
+                    $fdisplay(dump_f,"tag:   0x%h", tag_array[i][1]);
+                    $fdisplay(dump_f,"data:  0x%h", data_array[i][1]);
                 end
-                $fdisplay(f,"");
+                $fdisplay(dump_f,"");
             end
 
             $display("Cache dumped successful. Check cache.dump");
         end else begin
             $display("Error while cache dump");
         end
-        $fclose(f);
+        $fclose(dump_f);
     endtask
 
 
@@ -224,7 +235,8 @@ module cache#(
             mem_command_buff  = 'z;
             mem_data_buff     = 'z;
         end else if (dump) begin
-            dump_to_console;
+            dump_to_file;
+            dump_hit_stat;
         end else if (cpu_command == C1_READ8 || cpu_command == C1_READ16 || cpu_command == C1_READ32) begin
             req = req + 1;
 
