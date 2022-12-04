@@ -41,19 +41,19 @@ module cache#(
     // STORAGE
     reg valid_array [CACHE_SETS_COUNT-1:0][CACHE_WAY-1:0];
     reg dirty_array [CACHE_SETS_COUNT-1:0][CACHE_WAY-1:0];
-    reg last_used_array [CACHE_SETS_COUNT-1:0]; // lRU
+    reg LRU_array [CACHE_SETS_COUNT-1:0];
     reg [CACHE_TAG_SIZE-1:0] tag_array [CACHE_SETS_COUNT-1:0][CACHE_WAY-1:0];
     reg [CACHE_LINE_SIZE*8-1:0] data_array [CACHE_SETS_COUNT-1:0][CACHE_WAY-1:0]; // stores lines
 
     reg [CACHE_TAG_SIZE-1:0] cpu_tag_buff;
     reg [CACHE_SET_SIZE-1:0] cpu_set_buff;
     reg [CACHE_OFFSET_SIZE-1:0] cpu_offset_buff;
-    reg [BUS_SIZE-1:0] cpu_data_bus_buff; // single bus
+    reg [BUS_SIZE-1:0] cpu_data_bus_buff;
     reg [BUS_SIZE*2-1:0] cpu_data_to_write;
     reg [3-1:0] cpu_command_buff;
     
     reg [MEM_ADDR_SIZE-CACHE_OFFSET_SIZE-1:0] mem_address_buff;
-    reg [CACHE_LINE_SIZE*8-1:0] mem_line_buff; // single line
+    reg [CACHE_LINE_SIZE*8-1:0] mem_line_buff;
     reg [BUS_SIZE-1:0] mem_data_buff;
     reg [2-1:0] mem_command_buff;
 
@@ -123,10 +123,10 @@ module cache#(
             store;
         end else begin
             // evict if no empty space 
-            index_in_set = last_used_array[cpu_set_buff];
+            index_in_set = LRU_array[cpu_set_buff];
             evict_if_dirty;
         
-            index_in_set = last_used_array[cpu_set_buff];
+            index_in_set = LRU_array[cpu_set_buff];
             store;
         end
     endtask 
@@ -156,7 +156,7 @@ module cache#(
         tag_array[cpu_set_buff][index_in_set] = cpu_tag_buff;
         valid_array[cpu_set_buff][index_in_set] = 1;
         dirty_array[cpu_set_buff][index_in_set] = 0;
-        last_used_array[cpu_set_buff] = ~index_in_set; 
+        LRU_array[cpu_set_buff] = ~index_in_set; 
     endtask
 
     task read_cpu_address;
@@ -177,7 +177,7 @@ module cache#(
         end else if (cur_cpu_command == C1_READ16 || cur_cpu_command == C1_READ32) begin
             cpu_data_bus_buff = data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 16];
         end
-        last_used_array[cpu_set_buff] = ~index_in_set;
+        LRU_array[cpu_set_buff] = ~index_in_set;
     endtask 
 
     task write_to_storage;
@@ -190,13 +190,13 @@ module cache#(
             data_array[cpu_set_buff][index_in_set][cpu_offset_buff*8 +: 32] = cpu_data_to_write;
         end
         dirty_array[cpu_set_buff][index_in_set] = 1;
-        last_used_array[cpu_set_buff] = ~index_in_set;
+        LRU_array[cpu_set_buff] = ~index_in_set;
     endtask
 
     int hit_stat_file;
     task dump_hit_stat;
         $display("\nHIT statistic:");
-        $display("req: %d\nhits: %d\nrate: %f", req, hit, hit/req);
+        $display("Requests: %d\nHits: %d\nHIT RATE: %f", req, hit, hit/req);
         hit_stat_file = $fopen("hit_stat.dump", "w");
         if (hit_stat_file) begin
             $fdisplay(hit_stat_file, "%d\n%d\n", req, hit);

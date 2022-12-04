@@ -106,9 +106,7 @@ def main():
         print("\nData validation" + cl.OKGREEN + " passed" + cl.ENDC)
         print(
             f'{cl.HEADER}{cl.BOLD}Requests{cl.ENDC}: {cache.reqCount}\n{cl.HEADER}{cl.BOLD}Hits{cl.ENDC}:     {cache.hitCount}')
-        # print(
-        #     f'{cl.WARNING}{round(cache.hitCount/cache.reqCount, 6)}{cl.ENDC} of requsets is {cl.UNDERLINE}{cl.OKBLUE}HITS{cl.ENDC}\n')
-        print(f'{cl.UNDERLINE}{cl.OKBLUE}HIT RATE{cl.ENDC} is {cl.WARNING}{round(cache.hitCount/cache.reqCount, 6)}{cl.ENDC}\n')
+        print(f'{cl.UNDERLINE}{cl.OKBLUE}HIT RATE{cl.ENDC}: {cl.WARNING}{round(cache.hitCount/cache.reqCount, 6)}{cl.ENDC}\n')
 
 
 if __name__ == '__main__':

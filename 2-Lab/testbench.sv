@@ -55,6 +55,21 @@ module testbench ();
         .command(mem_command)
         );
 
+    int cyclesCount = 1;
+    initial begin
+        #2 forever begin
+            #1 if (clk) begin
+                ++cyclesCount;
+            end
+            if (mem_dump) begin
+                $display("Total clock cycles: %0d", cyclesCount);
+                repeat(2) begin
+                    @(posedge clk);
+                end
+            end
+        end
+    end
+
     initial begin
         reset = 0;
         #1 reset = 1;

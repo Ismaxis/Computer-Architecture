@@ -2,6 +2,8 @@
 /iverilog
 /HelloWorld
 /out
+/Report
 
 *.vcd
 *.dump
+*.out

@@ -175,6 +175,7 @@ module cpu #(
     int s;
     int j;
     int k;
+    int prev_val;
 
     task matrix_mull_sim;
         $display("Simulation started");
@@ -188,27 +189,35 @@ module cpu #(
                     // a
                     cpu_address_buff = pa + k*aIntSize;
                     READ8;
-                    s += local_storage[7:0];
+                    prev_val = local_storage[7:0];
 
                     //b 
                     cpu_address_buff = pb + j*bIntSize;
                     READ16;
-                    s += local_storage[15:0];
+                    s += local_storage[15:0] * prev_val;
+                    repeat(6) begin
+                        delay;
+                    end
                     
                     pb += N*bIntSize;
+                    delay;
                 end
+                // c
                 cpu_address_buff = pc + j*cIntSize;
                 data_to_write = s;
                 WRITE32;
             end
             pa += K*aIntSize;
+            delay;
             pc += N*cIntSize;
+            delay;
         end
         $display("Simulation finished");
     endtask
 
     // Place for test calls
     initial begin 
+        delay;
         matrix_mull_sim;
 
         dump_all;

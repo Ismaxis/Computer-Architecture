@@ -80,6 +80,7 @@ module mem #(
             dump_to_console;
         end else begin
             if (command == C2_READ) begin
+                command_buff = 'z;
                 wait_and_response;
 
                 // READ
@@ -90,6 +91,7 @@ module mem #(
                 command_buff = 'z;
             end else if (command == C2_WRITE) begin
                 data_buff = 'z;
+                command_buff = 'z;
                 wait_and_response;
 
                 // WRITE
