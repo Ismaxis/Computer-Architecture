@@ -1,0 +1,1 @@
+riscv64-unknown-elf-g++ -march=rv32im -mabi=ilp32 -O2 -x c++ %1 -o %2 -static -lm -nostdlib 
