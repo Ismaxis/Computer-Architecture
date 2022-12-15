@@ -36,10 +36,10 @@ void printFunc(ifstream& f, const string& name, int count, int start) {
 
 int main(int argc, char const* argv[]) {
     ifstream f("resources/out.elf", std::ios::binary);
-    int mainStart = 0x54;
-    int mainLengt = (0xa4 - mainStart) / 4 + 1;
-    int factorialStart = 0xa8;
-    int factorialLength = (0xd4 - factorialStart) / 4 + 1;
+    int mainStart = 0x74;
+    int mainLengt = (0xa8 - mainStart) / 4 + 1;
+    int factorialStart = 0xac;
+    int factorialLength = (0x120 - factorialStart) / 4 + 1;
 
     int ctr = 0;
     uint32_t read = 0;
@@ -49,7 +49,7 @@ int main(int argc, char const* argv[]) {
             ctr += mainLengt * 4;
         }
         if (ctr == factorialStart - 4) {
-            printFunc(f, "factorial", factorialLength, factorialStart);
+            printFunc(f, "mmul", factorialLength, factorialStart);
             ctr += factorialLength * 4;
         }
         ctr += 4;

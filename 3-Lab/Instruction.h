@@ -59,11 +59,7 @@ class Instruction {
 
         int funct3 = parseFunct3(bits);
 
-        for (size_t i = 0; i < 3; i++) {
-            opcode += isBitSet(bits, 1 << i) > 0 ? (1 << (i + 7)) : 0;
-        }
-
-        return MnemonicsStorage::getMnemonic(opcode);
+        return MnemonicsStorage::getProps(opcode, funct3).getMnemonic();
     }
 
     static uint8_t parseRegIndex(uint32_t bits, int startAddr) {

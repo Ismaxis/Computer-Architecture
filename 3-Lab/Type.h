@@ -5,4 +5,5 @@ enum Type : char {
     B,
     U,
     J,
+    UNKNOWN,
 };

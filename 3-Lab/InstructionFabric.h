@@ -3,7 +3,9 @@
 class InstructionFabric {
    public:
     static Instruction* createInsruction(uint32_t bits) {
-        InstProps props = MnemonicsStorage::getProps(Instruction::parseOpcodeBits(bits));
+        InstProps props = MnemonicsStorage::getProps(
+            Instruction::parseOpcodeBits(bits),
+            Instruction::parseFunct3(bits));
         Type type = props.getType();
         if (type == Type::R) {
             return new RType(bits, props);
@@ -12,7 +14,7 @@ class InstructionFabric {
         } else if (type == Type::B) {
             return new BType(bits, props);
         } else {
-            throw new std::runtime_error("Unknown type for instruction '" + std::to_string(props.getType()) + "'");
+            throw new std::runtime_error("Unknown type '" + std::to_string(type) + "' '" + props.getMnemonic() + "'");
         }
     }
 };
