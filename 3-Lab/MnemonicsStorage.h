@@ -19,20 +19,17 @@ class Container {
     }
 };
 
-class MnemonicsStorage {
+class Storage {
    private:
-    MnemonicsStorage();
+    Storage();
     static std::unordered_map<uint16_t, Container> opcodeMap;
 
    public:
-    // static std::string getMnemonic(uint16_t opcode) {
-    //     return opcodeMap[opcode].getMnemonic();
-    // }
     static InstProps getProps(uint16_t opcode, uint8_t funct3) {
         if (opcodeMap.count(opcode) > 0) {
             return opcodeMap[opcode].getProps(funct3);
         } else {
-            return InstProps("Unknown command", Type::UNKNOWN);
+            return InstProps("Unknown instruction", Type::UNKNOWN);
         }
     }
     static std::string getRegisterName(uint8_t index) {
@@ -64,7 +61,7 @@ class MnemonicsStorage {
     }
 };
 
-std::unordered_map<uint16_t, Container> MnemonicsStorage::opcodeMap = {
+std::unordered_map<uint16_t, Container> Storage::opcodeMap = {
     {0b0110111, Container(std::unordered_map<uint8_t, InstProps>{
                     {0b0, InstProps("lui", Type::U)}})},
     {0b0010111, Container(std::unordered_map<uint8_t, InstProps>{
@@ -72,13 +69,13 @@ std::unordered_map<uint16_t, Container> MnemonicsStorage::opcodeMap = {
     {0b1101111, Container(std::unordered_map<uint8_t, InstProps>{
                     {0b0, InstProps("jal", Type::J)}})},
     {0b1100111, Container(std::unordered_map<uint8_t, InstProps>{
-                    {0b0, InstProps("jalr", Type::I)}})},
+                    {0b0, InstProps("jalr", Type::IAddr)}})},
     {0b0000011, Container(std::unordered_map<uint8_t, InstProps>{
-                    {0b000, InstProps("lb", Type::I)},
-                    {0b001, InstProps("lh", Type::I)},
-                    {0b010, InstProps("lw", Type::I)},
-                    {0b100, InstProps("lbu", Type::I)},
-                    {0b101, InstProps("lhu", Type::I)}})},
+                    {0b000, InstProps("lb", Type::IAddr)},
+                    {0b001, InstProps("lh", Type::IAddr)},
+                    {0b010, InstProps("lw", Type::IAddr)},
+                    {0b100, InstProps("lbu", Type::IAddr)},
+                    {0b101, InstProps("lhu", Type::IAddr)}})},
     {0b1100011, Container(std::unordered_map<uint8_t, InstProps>{
                     {0b000, InstProps("beq", Type::B)},
                     {0b001, InstProps("bne", Type::B)},
@@ -96,12 +93,9 @@ std::unordered_map<uint16_t, Container> MnemonicsStorage::opcodeMap = {
                     {0b011, InstProps("sltiu", Type::I)},
                     {0b100, InstProps("xori", Type::I)},
                     {0b110, InstProps("ori", Type::I)},
-                    {0b111, InstProps("andi", Type::I)}})},
-
-    {0b0010011, Container(std::unordered_map<uint8_t, InstProps>{
-                    {0b001, InstProps("slli", Type::R)},
-                    {0b101, InstProps("srli/srai", Type::R)}})},
-
+                    {0b111, InstProps("andi", Type::I)},
+                    {0b001, InstProps("slli", Type::I)},
+                    {0b101, InstProps("srli/srai", Type::I)}})},
     {0b0110011, Container(std::unordered_map<uint8_t, InstProps>{
                     {0b000, InstProps("add/sub", Type::R)},
                     {0b001, InstProps("sll", Type::R)},

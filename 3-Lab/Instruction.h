@@ -59,7 +59,7 @@ class Instruction {
 
         int funct3 = parseFunct3(bits);
 
-        return MnemonicsStorage::getProps(opcode, funct3).getMnemonic();
+        return Storage::getProps(opcode, funct3).getMnemonic();
     }
 
     static uint8_t parseRegIndex(uint32_t bits, int startAddr) {
@@ -71,15 +71,15 @@ class Instruction {
     }
 
     static std::string parseRd(uint32_t bits) {
-        return MnemonicsStorage::getRegisterName(parseRegIndex(bits, 7));
+        return Storage::getRegisterName(parseRegIndex(bits, 7));
     }
 
     static std::string parseRs1(uint32_t bits) {
-        return MnemonicsStorage::getRegisterName(parseRegIndex(bits, 15));
+        return Storage::getRegisterName(parseRegIndex(bits, 15));
     }
 
     static std::string parseRs2(uint32_t bits) {
-        return MnemonicsStorage::getRegisterName(parseRegIndex(bits, 20));
+        return Storage::getRegisterName(parseRegIndex(bits, 20));
     }
 
     static bool isBitSet(uint32_t bits, int index) {
@@ -126,6 +126,28 @@ class IType : public Instruction {
     }
 };
 
+class IAddrType : public Instruction {
+   public:
+    IAddrType(uint32_t bits, InstProps props) : Instruction(bits, props) {}
+    ~IAddrType() = default;
+
+    std::string instructionString() const override {
+        return props.getMnemonic() + '\t' + parseRd(bits) + '\t' + parseImm12() + '(' + parseRs1(bits) + ')';
+    }
+
+   private:
+    std::string parseImm12() const {
+        int16_t imm12 = 0;
+        for (size_t i = 0; i < 11; i++) {
+            imm12 += isBitSet(bits, i + 20) > 0 ? (1 << i) : 0;
+        }
+
+        imm12 -= isBitSet(bits, 11 + 20) > 0 ? (1 << 11) : 0;
+
+        return std::to_string(imm12);
+    }
+};
+
 class BType : public Instruction {
    public:
     BType(uint32_t bits, InstProps props) : Instruction(bits, props) {}
@@ -133,7 +155,7 @@ class BType : public Instruction {
 
    private:
     std::string instructionString() const override {
-        return props.getMnemonic() + '\t' + parseRs1(bits) + '\t' + parseRs1(bits) + '\t' + parseImm();
+        return props.getMnemonic() + '\t' + parseRs1(bits) + '\t' + parseRs2(bits) + '\t' + parseImm();
     }
 
     std::string parseImm() const {
@@ -163,5 +185,82 @@ class BType : public Instruction {
             std::cout << isBitSet(bits, i) ? '1' : '0';
         }
         std::cout << '\n';
+    }
+};
+
+class SType : public Instruction {
+   public:
+    SType(uint32_t bits, InstProps props) : Instruction(bits, props) {}
+    ~SType() = default;
+
+   private:
+    std::string instructionString() const override {
+        return props.getMnemonic() + '\t' + parseRs2(bits) + '\t' + parseImm() + '(' + parseRs1(bits) + ')';
+    }
+
+    std::string parseImm() const {
+        int16_t imm = 0;
+
+        for (size_t i = 0; i < 5; i++) {
+            imm += isBitSet(bits, i + 7) ? (1 << i) : 0;
+        }
+
+        for (size_t i = 0; i < 6; i++) {
+            imm += isBitSet(bits, i + 25) ? (1 << (i + 5)) : 0;
+        }
+
+        imm -= (bits & (1 << 25 + 6)) > 0 ? (1 << 11) : 0;
+
+        return std::to_string(imm);
+    }
+};
+
+class UType : public Instruction {
+   public:
+    UType(uint32_t bits, InstProps props) : Instruction(bits, props) {}
+    ~UType() = default;
+
+   private:
+    std::string instructionString() const override {
+        return props.getMnemonic() + '\t' + parseRd(bits) + '\t' + "0x" + parseImm();
+    }
+
+    std::string parseImm() const {
+        int32_t imm = 0;
+
+        for (size_t i = 12; i < 32; i++) {
+            imm += isBitSet(bits, i) ? (1 << i) : 0;
+        }
+
+        return toHexString(imm);
+    }
+};
+
+class JType : public Instruction {
+   public:
+    JType(uint32_t bits, InstProps props) : Instruction(bits, props) {}
+    ~JType() = default;
+
+   private:
+    std::string instructionString() const override {
+        return props.getMnemonic() + '\t' + parseRd(bits) + '\t' + parseImm();
+    }
+
+    std::string parseImm() const {
+        int32_t imm = 0;
+
+        for (size_t i = 12; i < 20; i++) {
+            imm += isBitSet(bits, i) ? (1 << i) : 0;
+        }
+
+        imm += isBitSet(bits, 20) ? (1 << 11) : 0;
+
+        for (size_t i = 0; i < 10; i++) {
+            imm += isBitSet(bits, i + 21) ? (1 << (i + 1)) : 0;
+        }
+
+        imm -= isBitSet(bits, 31) ? (1 << 20) : 0;
+
+        return toHexString(address + imm);
     }
 };

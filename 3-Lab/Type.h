@@ -1,6 +1,7 @@
 enum Type : char {
     R,
     I,
+    IAddr,
     S,
     B,
     U,
