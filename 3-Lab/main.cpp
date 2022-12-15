@@ -1,9 +1,9 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <vector>
 
-#include "parseFuncs.h"
-
+#include "InstructionFabric.h"
 using namespace std;
 
 template <typename T>
@@ -12,29 +12,22 @@ void print(T n) {
          << std::hex << n;
 }
 
-void printInstruction(uint32_t bits) {
-    print(bits);
-    cout << '\t' << praseMnemonic(bits) << '\t' << parseRd(bits) << '\t' << parseRs1(bits) << '\t' << parseRs2(bits) << ' ';
-}
-
 void printFunc(ifstream& f, const string& name, int count, int start) {
     cout << name << '\n';
 
-    uint16_t ch = 0;
-    uint32_t curInstr = 0;
-    for (size_t i = 0; i < count * 4; i++) {
-        if (f.read((char*)(&ch), sizeof(uint8_t))) {
-            int mod = i % 4;
-            curInstr += ch << mod * 8;
+    uint32_t read = 0;
 
-            if (mod == 3) {
-                print((uint16_t)(start + 1 + i - 3));
-                cout << ": ";
-                printInstruction(curInstr);
-                cout << '\n';
-
-                curInstr = 0;
+    for (size_t curAddr = 0; curAddr < count * 4; curAddr += 4) {
+        if (f.read((char*)(&read), sizeof(uint32_t))) {
+            try {
+                Instruction* curInst = InstructionFabric::createInsruction(read);
+                curInst->setAddress(start + curAddr);
+                cout << curInst->toString();
+                delete curInst;
+            } catch (std::runtime_error* e) {
+                cout << e->what();
             }
+            cout << '\n';
         } else {
             throw new runtime_error("Reading error");
         }
@@ -49,18 +42,17 @@ int main(int argc, char const* argv[]) {
     int factorialLength = (0xd4 - factorialStart) / 4 + 1;
 
     int ctr = 0;
-    uint16_t ch = 0;
-    uint32_t curInstr = 0;
-    while (f.read((char*)(&ch), sizeof(uint8_t))) {
-        if (ctr == mainStart - 1) {
-            printFunc(f, "main", mainLengt, ctr);
+    uint32_t read = 0;
+    while (f.read((char*)(&read), sizeof(uint32_t))) {
+        if (ctr == mainStart - 4) {
+            printFunc(f, "main", mainLengt, mainStart);
             ctr += mainLengt * 4;
         }
-        if (ctr == factorialStart - 1) {
-            printFunc(f, "factorial", factorialLength, ctr);
+        if (ctr == factorialStart - 4) {
+            printFunc(f, "factorial", factorialLength, factorialStart);
             ctr += factorialLength * 4;
         }
-        ++ctr;
+        ctr += 4;
     }
 
     f.close();

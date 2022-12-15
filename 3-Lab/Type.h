@@ -1,4 +1,4 @@
-enum Type : uint8_t {
+enum Type : char {
     R,
     I,
     S,

@@ -2,19 +2,19 @@
 
 #include "Type.h"
 
-using namespace std;
-class InscructionProperties {
+class InstProps {
    private:
-    string mnemonic;
+    std::string mnemonic;
     Type type;
 
    public:
-    InscructionProperties(string mnemonic, Type type) {
+    InstProps() = default;
+    InstProps(std::string mnemonic, Type type) {
         this->mnemonic = mnemonic;
         this->type = type;
     }
 
-    string getMnemonic() const {
+    std::string getMnemonic() const {
         return mnemonic;
     }
 
