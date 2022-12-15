@@ -7,8 +7,9 @@ int factorial(int n) {
 
 int main(int argc, char const *argv[]) {
     int a = factorial(argc);
-
-    int b = 0;
+    a = (int)((unsigned int)a >> argc);
+    a += 1 << argc;
+    int b = a + argc;
     if (a > argc) {
         b = 1;
     }
