@@ -35,7 +35,7 @@ Disassembly of section .text:
    10088:	01010113          	addi	sp,sp,16
    1008c:	00008067          	jalr	zero,0(ra)
    10090:	00000013          	addi	zero,zero,0
-   10094:	00259513          	slli	a0,a1,0x2
+   10094:	4025d513          	srai	a0,a1,0x2
    10098:	00100137          	lui	sp,0x100
    1009c:	fd9ff0ef          	jal	ra,10074 <main>
    100a0:	00050593          	addi	a1,a0,0

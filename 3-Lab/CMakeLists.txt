@@ -1,11 +1,12 @@
-cmake_minimum_required(VERSION 3.0.0)
-project(RiscV-Disassembler VERSION 0.1.0)
+﻿cmake_minimum_required (VERSION 3.8)
 
-include(CTest)
-enable_testing()
+project ("RiscV-Disassembler")
 
-add_executable(RiscV-Disassembler main.cpp)
+add_executable (RiscV-Disassembler 
+	main.cpp
+	Instruction.h Instruction.cpp
+	Storage.h Storage.cpp
+	Type.h
+)
 
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-include(CPack)
+add_subdirectory(Types)

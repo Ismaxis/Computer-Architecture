@@ -1,5 +1,5 @@
 asm("nop");
-asm("slli a0, a1, 2");
+asm("srai a0, a1, 2");
 asm("lui x2, 0x100");     // SP set to 1 MB Setting the stack pointer register to an address
 asm("jal main");          // call main
 asm("addi x11, x10, 0");  // save return value in a1

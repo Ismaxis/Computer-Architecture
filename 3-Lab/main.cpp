@@ -13,29 +13,27 @@ void print(T n) {
 }
 
 void printFunc(ifstream& f, const string& name, int count, int start) {
-    cout << name << '\n';
+    cout << name << endl;
 
     uint32_t read = 0;
-
     for (size_t curAddr = 0; curAddr < count * 4; curAddr += 4) {
         if (f.read((char*)(&read), sizeof(uint32_t))) {
             try {
                 Instruction* curInst = InstructionFabric::createInsruction(read);
                 curInst->setAddress(start + curAddr);
-                cout << curInst->toString();
+                cout << curInst->toString() << endl;
                 delete curInst;
             } catch (std::runtime_error* e) {
                 cout << e->what();
             }
-            cout << '\n';
         } else {
+            cout << endl;
             throw new runtime_error("Reading error");
         }
     }
 }
 
 int main(int argc, char const* argv[]) {
-    ifstream f("resources/out.elf", std::ios::binary);
     int mainStart = 0x74;
     int mainLengt = (0xac - mainStart) / 4 + 1;
     int factorialStart = 0xb0;
@@ -43,16 +41,24 @@ int main(int argc, char const* argv[]) {
 
     int ctr = 0;
     uint32_t read = 0;
-    while (f.read((char*)(&read), sizeof(uint32_t))) {
-        if (ctr == mainStart - 4) {
-            printFunc(f, "main", mainLengt, mainStart);
-            ctr += mainLengt * 4;
+
+    ifstream f;
+    try {
+        f.open("resources/out.elf", std::ios::binary);
+        while (f.read((char*)(&read), sizeof(uint32_t))) {
+            if (ctr == mainStart - 4) {
+                printFunc(f, "main", mainLengt, mainStart);
+                ctr += mainLengt * 4;
+            }
+            if (ctr == factorialStart - 4) {
+                cout << endl;
+                printFunc(f, "mmul", factorialLength, factorialStart);
+                ctr += factorialLength * 4;
+            }
+            ctr += 4;
         }
-        if (ctr == factorialStart - 4) {
-            printFunc(f, "mmul", factorialLength, factorialStart);
-            ctr += factorialLength * 4;
-        }
-        ctr += 4;
+    } catch (const ifstream::failure& e) {
+        cout << e.what() << '\n';
     }
 
     f.close();
