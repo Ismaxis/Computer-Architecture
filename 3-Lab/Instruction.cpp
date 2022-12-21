@@ -6,10 +6,8 @@ std::string Instruction::addressString() const {
     return toHexString(address);
 }
 
-std::string Instruction::toString() const {
+void Instruction::toString() const {
     printf("   %05x:\t%08x\t%7s\n", address, bits, instructionString().c_str());
-    return std::string();
-    // return addressString() + ":\t" + toHexString(bits) + instructionString();
 }
 
 Instruction::~Instruction() = default;

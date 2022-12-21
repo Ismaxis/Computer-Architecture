@@ -16,7 +16,7 @@ class Instruction {
     virtual std::string instructionString() const = 0;
 
    public:
-    std::string toString() const;
+    virtual void toString() const;
 
     virtual ~Instruction();
 

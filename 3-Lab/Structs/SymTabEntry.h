@@ -11,7 +11,7 @@ class SymTabEntry : AbstractStruct {
     unsigned char other;
     Elf32_Half shndx;
 
-    void fill(std::ifstream& f) {
+    void fill(std::istream& f) override {
         read(name, sizeof(name), f);
         read(value, sizeof(value), f);
         read(size, sizeof(size), f);

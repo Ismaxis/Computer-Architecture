@@ -37,14 +37,15 @@ void ElfParser::parse() {
             }
         } else if (sectionHeaders[i].type == SYM_TAB) {
             symTabAddress = sectionHeaders[i].offset;
-            symTabEntriesCount = sectionHeaders[i].size / sectionHeaders[i].entsize;  // by default ent size is 0x10
+            symTabEntrySize = sectionHeaders[i].entsize;
+            symTabEntriesCount = sectionHeaders[i].size / symTabEntrySize;  // by default ent size is 0x10
         }
     }
 
     fillStrTab(buff);
     fillShStrTab(buff);
 
-    // search for .text section
+    // Search for .text section
     for (int i = 1; i < elfHeader.shnum; i++) {
         if (getStringFromShStrTab(sectionHeaders[i].name) == ".text") {
             textAddress = sectionHeaders[i].offset;
@@ -65,8 +66,13 @@ void ElfParser::parse() {
 
     // SYMBOL TABLE
     symTableEntries = new SymTabEntry[symTabEntriesCount];
+    std::stringstream bufferStream;
+    bufferStream.rdbuf()->pubsetbuf(buff + symTabAddress - bufferOffset, bufferSize - (symTabAddress - bufferOffset));
     for (int i = 0; i < symTabEntriesCount; i++) {
-        symTableEntries[i].fill(file);
+        symTableEntries[i].fill(bufferStream);
+        if (symTableEntries[i].info % 0b00010000 == STT_FUNC) {
+            labels[symTableEntries[i].value] = getStringFromStrTab(symTableEntries[i].name);
+        }
     }
 
     file.close();
@@ -74,21 +80,13 @@ void ElfParser::parse() {
 }
 
 void ElfParser::printDotText() {
-    for (auto& instruction : instructions) {
-        // std::cout << instruction->toString() << std::endl;
-        instruction->toString();
+    int curAddr = textVirtualAddress;
+    for (int i = 0; i < instructions.size(); i++, curAddr += 4) {
+        if (labels.count(curAddr) > 0) {
+            printf("%08x   <%s>:\n", curAddr, labels[curAddr].c_str());
+        }
+        instructions.at(i)->toString();
     }
-}
-
-uint32_t ElfParser::getSizeOfText() {
-    // вся инфа из section_table
-    // 68 - .eh_frame s_size
-    // эту же информацию можно найти в .text s_size
-    return programmHeaders[1].offset - 68 - (elfHeader.phoff + elfHeader.phnum * elfHeader.phentsize);
-}
-
-uint32_t ElfParser::getEntryPoint() {
-    return elfHeader.entry;
 }
 
 void ElfParser::fillStrTab(char* buff) {
@@ -114,6 +112,7 @@ std::string ElfParser::getStringFromStrTab(uint32_t offset) {
     int charsRead = 0;
     while (strTab[offset + charsRead] != '\0') {
         ss << strTab[offset + charsRead];
+        ++charsRead;
     }
 
     return ss.str();

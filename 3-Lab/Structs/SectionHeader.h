@@ -15,7 +15,7 @@ class SectionHeader : AbstractStruct {
     Elf32_Word addralign;
     Elf32_Word entsize;
 
-    void fill(std::ifstream& f) {
+    void fill(std::istream& f) override {
         read(name, sizeof(name), f);
         read(type, sizeof(type), f);
         read(flags, sizeof(flags), f);

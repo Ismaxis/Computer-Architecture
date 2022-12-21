@@ -13,7 +13,7 @@ class ProgrammHeader : AbstractStruct {
     Elf32_Word flags;
     Elf32_Word align;
 
-    void fill(std::ifstream& f) {
+    void fill(std::istream& f) override {
         read(type, sizeof(type), f);
         read(offset, sizeof(offset), f);
         read(vaddr, sizeof(vaddr), f);

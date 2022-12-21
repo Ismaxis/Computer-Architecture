@@ -11,6 +11,14 @@
 class ElfParser {
     static const uint8_t SYM_TAB = 2;
     static const uint8_t STR_TAB = 3;
+    static const uint8_t STT_FUNC = 2;
+
+   public:
+    ElfParser(std::ifstream& f);
+    ~ElfParser();
+
+    void parse();
+    void printDotText();
 
    private:
     std::ifstream& file;
@@ -23,6 +31,7 @@ class ElfParser {
 
     // SYM_TAB
     uint32_t symTabAddress;
+    uint32_t symTabEntrySize;
     uint32_t symTabEntriesCount;
     SymTabEntry* symTableEntries;
     // STR_TAB
@@ -45,14 +54,5 @@ class ElfParser {
     uint32_t textSize;
 
     std::vector<Instruction*> instructions;
-
-   public:
-    ElfParser(std::ifstream& f);
-    ~ElfParser();
-
-    void parse();
-    void printDotText();
-
-    uint32_t getSizeOfText();
-    uint32_t getEntryPoint();
+    std::unordered_map<uint32_t, std::string> labels;
 };

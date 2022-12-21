@@ -21,7 +21,7 @@ class ElfHeader : AbstractStruct {
     Elf32_Half shnum;
     Elf32_Half shstrndx;
 
-    void fill(std::ifstream& f) {
+    void fill(std::istream& f) override {
         read(name, EI_NIDENT, f);
         read(type, sizeof(type), f);
         read(machine, sizeof(machine), f);
