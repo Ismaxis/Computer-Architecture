@@ -41,9 +41,6 @@ int main(int argc, char const* argv[]) {
         ElfParser parser = ElfParser(f);
         parser.parse();
         parser.printDotText();
-        // int textSize = parser.getSizeOfText();
-        // cout << textSize << "\n";
-        // printFunc(f, "main/mmul", textSize, parser.getEntryPoint());
     } catch (const ifstream::failure& e) {
         cout << "ifstream::failure in main: " << e.what() << '\n';
     } catch (std::runtime_error* e) {

@@ -1,4 +1,7 @@
+#pragma once
+
 #include "AbstractStruct.h"
+
 class ProgrammHeader : AbstractStruct {
    public:
     Elf32_Word type;

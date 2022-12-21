@@ -64,10 +64,10 @@ void ElfParser::parse() {
     }
 
     // SYMBOL TABLE
-    // symTableEntries = new SymTabEntry[symTabEntriesCount];
-    // for (int i = 0; i < symTabEntriesCount; i++) {
-    //     symTableEntries[i].fill(file);
-    // }
+    symTableEntries = new SymTabEntry[symTabEntriesCount];
+    for (int i = 0; i < symTabEntriesCount; i++) {
+        symTableEntries[i].fill(file);
+    }
 
     file.close();
     delete[] buff;
@@ -139,7 +139,7 @@ ElfParser::~ElfParser() {
     }
     delete[] programmHeaders;
     delete[] sectionHeaders;
-    // delete[] symTableEntries;
+    delete[] symTableEntries;
     delete[] strTab;
     delete[] shStrTab;
 }

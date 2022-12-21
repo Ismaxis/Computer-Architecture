@@ -1,5 +1,4 @@
-#ifndef Instruction_Fabric
-#define Instruction_Fabric
+#pragma once
 
 #include <BType.h>
 #include <IAddrType.h>
@@ -8,6 +7,7 @@
 #include <RType.h>
 #include <SType.h>
 #include <UType.h>
+#include <UnknownType.h>
 
 class InstructionFabric {
    public:
@@ -29,9 +29,7 @@ class InstructionFabric {
         } else if (type == Type::J) {
             return new JType(bits);
         } else {
-            throw new std::runtime_error("Unknown type '" + std::to_string(type) + "'");
+            return new UnknownType(bits);
         }
     }
 };
-
-#endif

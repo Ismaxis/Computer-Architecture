@@ -14,7 +14,6 @@ class BType : public Instruction {
     }
 
     std::string parseImm() const {
-        // printBin(bits);
         int16_t imm = 0;
         imm += isBitSet(bits, 7) ? (1 << 11) : 0;
 

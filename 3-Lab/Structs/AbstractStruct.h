@@ -1,8 +1,6 @@
 #pragma once
-#include "typedef.h"
 
-#ifndef Abstract_Struct
-#define Abstract_Struct
+#include "typedef.h"
 
 class AbstractStruct {
    protected:
@@ -11,4 +9,3 @@ class AbstractStruct {
         f.read((char*)(&place), bytes);
     }
 };
-#endif

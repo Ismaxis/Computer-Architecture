@@ -1,4 +1,7 @@
+#pragma once
+
 #include "AbstractStruct.h"
+
 class SymTabEntry : AbstractStruct {
    public:
     Elf32_Word name;

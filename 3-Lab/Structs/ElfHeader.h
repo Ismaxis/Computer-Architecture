@@ -1,4 +1,7 @@
+#pragma once
+
 #include "AbstractStruct.h"
+
 class ElfHeader : AbstractStruct {
    public:
     static const int EI_NIDENT = 16;
