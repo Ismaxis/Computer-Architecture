@@ -10,7 +10,7 @@ class SType : public Instruction {
 
    private:
     std::string instructionString() const override {
-        return getMnemonic() + '\t' + parseRs2(bits) + '\t' + parseImm() + '(' + parseRs1(bits) + ')';
+        return getMnemonic() + '\t' + parseRs2(bits) + ", " + parseImm() + '(' + parseRs1(bits) + ')';
     }
 
     std::string parseImm() const {
@@ -24,7 +24,7 @@ class SType : public Instruction {
             imm += isBitSet(bits, i + 25) ? (1 << (i + 5)) : 0;
         }
 
-        imm -= (bits & (1 << 25 + 6)) > 0 ? (1 << 11) : 0;
+        imm -= (bits & (1 << (25 + 6))) > 0 ? (1 << 11) : 0;
 
         return std::to_string(imm);
     }

@@ -1,1 +1,0 @@
-riscv64-unknown-elf-objdump --disassemble --target=elf32-littleriscv --architecture=riscv:rv32 --disassembler-options=no-aliases --syms %1 > resources/out.s

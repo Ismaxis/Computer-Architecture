@@ -13,7 +13,7 @@ class IType : public Instruction {
     ~IType() = default;
 
     std::string instructionString() const override {
-        return getMnemonic() + '\t' + parseRd(bits) + '\t' + parseRs1(bits) + '\t' + parseImm12();
+        return getMnemonic() + '\t' + parseRd(bits) + ", " + parseRs1(bits) + ", " + parseImm12();
     }
 
    private:

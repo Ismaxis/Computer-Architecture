@@ -9,7 +9,7 @@ class IAddrType : public Instruction {
     ~IAddrType() override = default;
 
     std::string instructionString() const override {
-        return getMnemonic() + '\t' + parseRd(bits) + '\t' + parseImm12() + '(' + parseRs1(bits) + ')';
+        return getMnemonic() + '\t' + parseRd(bits) + ", " + parseImm12() + '(' + parseRs1(bits) + ')';
     }
 
    private:

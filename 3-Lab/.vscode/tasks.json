@@ -9,7 +9,13 @@
                 "-g",
                 "${file}",
                 "-o",
-                "${fileDirname}\\out\\${fileBasenameNoExtension}.exe"
+                "${fileDirname}\\out\\${fileBasenameNoExtension}.exe",
+                "-I", 
+                "${fileDirname}\\Types",
+                "-I", 
+                "${fileDirname}\\",
+                "-I", 
+                "${fileDirname}\\Structs"
             ],
             "options": {
                 "cwd": "${fileDirname}"

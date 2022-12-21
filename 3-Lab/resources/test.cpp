@@ -34,7 +34,15 @@ void mmul() {
     }
 }
 
+int factorial(int n) {
+    if (n == 2) {
+        return 2;
+    }
+    return n * factorial(n - 1);
+}
+
 int main() {
+    int a = factorial(2);
     mmul();
     return 0;
 }

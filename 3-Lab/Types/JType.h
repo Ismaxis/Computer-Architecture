@@ -8,7 +8,7 @@ class JType : public Instruction {
 
    private:
     std::string instructionString() const override {
-        return getMnemonic() + '\t' + parseRd(bits) + '\t' + parseImm();
+        return getMnemonic() + '\t' + parseRd(bits) + ", " + parseImm();
     }
 
     std::string parseImm() const {

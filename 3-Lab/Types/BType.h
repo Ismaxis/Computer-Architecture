@@ -10,7 +10,7 @@ class BType : public Instruction {
 
    private:
     std::string instructionString() const override {
-        return getMnemonic() + '\t' + parseRs1(bits) + '\t' + parseRs2(bits) + '\t' + parseImm();
+        return getMnemonic() + '\t' + parseRs1(bits) + ", " + parseRs2(bits) + ", " + parseImm();
     }
 
     std::string parseImm() const {
@@ -25,7 +25,7 @@ class BType : public Instruction {
             imm += isBitSet(bits, i + 25) ? (1 << (i + 5)) : 0;
         }
 
-        imm -= (bits & (1 << 25 + 6)) > 0 ? (1 << 12) : 0;
+        imm -= (bits & (1 << (25 + 6))) > 0 ? (1 << 12) : 0;
 
         return toHexString(address + imm);
     }

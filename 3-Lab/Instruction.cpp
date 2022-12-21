@@ -7,7 +7,9 @@ std::string Instruction::addressString() const {
 }
 
 std::string Instruction::toString() const {
-    return addressString() + ":\t" + instructionString();
+    printf("   %05x:\t%08x\t%7s\n", address, bits, instructionString().c_str());
+    return std::string();
+    // return addressString() + ":\t" + toHexString(bits) + instructionString();
 }
 
 Instruction::~Instruction() = default;

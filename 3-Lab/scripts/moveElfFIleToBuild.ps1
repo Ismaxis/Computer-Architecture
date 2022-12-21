@@ -1,0 +1,1 @@
+cp "./resources/out.elf" "./build/resources/"

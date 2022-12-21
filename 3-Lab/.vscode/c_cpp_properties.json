@@ -16,7 +16,7 @@
             "compilerPath": "C:\\Users\\Ismaxis\\scoop\\apps\\mingw-winlibs-llvm\\current\\bin\\g++.exe",
             "cStandard": "c17",
             "cppStandard": "c++17",
-            "intelliSenseMode": "gcc-x64",
+            "intelliSenseMode": "gcc-x86",
             "configurationProvider": "ms-vscode.cmake-tools"
         }
     ],

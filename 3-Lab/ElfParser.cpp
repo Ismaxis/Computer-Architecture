@@ -75,7 +75,8 @@ void ElfParser::parse() {
 
 void ElfParser::printDotText() {
     for (auto& instruction : instructions) {
-        std::cout << instruction->toString() << std::endl;
+        // std::cout << instruction->toString() << std::endl;
+        instruction->toString();
     }
 }
 

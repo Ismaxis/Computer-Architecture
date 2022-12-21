@@ -9,12 +9,12 @@ class RType : public Instruction {
     ~RType() override = default;
 
     std::string instructionString() const override {
-        return praseMnemonic() + '\t' + parseRd(bits) + '\t' + parseRs1(bits) + '\t' + parseRs2(bits);
+        return getMnemonic() + '\t' + parseRd(bits) + ", " + parseRs1(bits) + ", " + parseRs2(bits);
     }
 
    private:
-    std::string praseMnemonic() const {
-        uint16_t key = parseFunct7(bits) << 3 + parseFunct3(bits);
+    std::string getMnemonic() const {
+        uint16_t key = parseFunct7(bits) << (3 + parseFunct3(bits));
         return mnemonics[key];
     }
 };

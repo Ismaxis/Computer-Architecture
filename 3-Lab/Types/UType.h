@@ -7,7 +7,7 @@ class UType : public Instruction {
 
    private:
     std::string instructionString() const override {
-        return getMnemonic() + '\t' + parseRd(bits) + '\t' + "0x" + parseImm();
+        return getMnemonic() + '\t' + parseRd(bits) + ", " + "0x" + parseImm();
     }
 
     std::string parseImm() const {
