@@ -9,7 +9,6 @@ class AbstractStruct {
     template <typename T>
     void read(T& place, int bytes, std::ifstream& f) {
         f.read((char*)(&place), bytes);
-        // std::cout << place << "\n";
     }
 };
 #endif

@@ -1,3 +1,6 @@
+#ifndef Instruction_Fabric
+#define Instruction_Fabric
+
 #include <BType.h>
 #include <IAddrType.h>
 #include <IType.h>
@@ -30,3 +33,5 @@ class InstructionFabric {
         }
     }
 };
+
+#endif

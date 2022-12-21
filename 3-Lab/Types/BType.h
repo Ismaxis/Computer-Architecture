@@ -31,27 +31,18 @@ class BType : public Instruction {
         return toHexString(address + imm);
     }
 
-    static void printBin(uint32_t bits) {  // TODO remove
-        std::cout << '\n';
-        for (int i = 31; i >= 0; i--) {
-            if (i % 4 == 3) {
-                std::cout << ' ';
-            }
-            std::cout << isBitSet(bits, i) ? '1' : '0';
-        }
-        std::cout << '\n';
-    }
+    // static void printBin(uint32_t bits) {  // TODO remove
+    //     std::cout << '\n';
+    //     for (int i = 31; i >= 0; i--) {
+    //         if (i % 4 == 3) {
+    //             std::cout << ' ';
+    //         }
+    //         std::cout << isBitSet(bits, i) ? '1' : '0';
+    //     }
+    //     std::cout << '\n';
+    // }
 
     std::string getMnemonic() const {
         return mnemonics[parseFunct3(bits)];
     }
-};
-
-std::unordered_map<uint8_t, std::string> BType::mnemonics {
-    {0b000, "beq"},
-    {0b001, "bne"},
-    {0b100, "blt"},
-    {0b101, "bge"},
-    {0b110, "bltu"},
-    {0b111, "bgeu"},
 };
