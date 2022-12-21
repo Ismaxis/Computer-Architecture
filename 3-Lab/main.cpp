@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 
+#include "ElfParser.h"
 #include "InstructionFabric.h"
 using namespace std;
 
@@ -16,7 +17,7 @@ void printFunc(ifstream& f, const string& name, int count, int start) {
     cout << name << endl;
 
     uint32_t read = 0;
-    for (size_t curAddr = 0; curAddr < count * 4; curAddr += 4) {
+    for (size_t curAddr = 0; curAddr < count; curAddr += 4) {
         if (f.read((char*)(&read), sizeof(uint32_t))) {
             try {
                 Instruction* curInst = InstructionFabric::createInsruction(read);
@@ -24,7 +25,7 @@ void printFunc(ifstream& f, const string& name, int count, int start) {
                 cout << curInst->toString() << endl;
                 delete curInst;
             } catch (std::runtime_error* e) {
-                cout << e->what();
+                cout << e->what() << endl;
             }
         } else {
             cout << endl;
@@ -34,29 +35,14 @@ void printFunc(ifstream& f, const string& name, int count, int start) {
 }
 
 int main(int argc, char const* argv[]) {
-    int mainStart = 0x74;
-    int mainLengt = (0xac - mainStart) / 4 + 1;
-    int factorialStart = 0xb0;
-    int factorialLength = (0x124 - factorialStart) / 4 + 1;
-
-    int ctr = 0;
-    uint32_t read = 0;
-
     ifstream f;
     try {
         f.open("resources/out.elf", std::ios::binary);
-        while (f.read((char*)(&read), sizeof(uint32_t))) {
-            if (ctr == mainStart - 4) {
-                printFunc(f, "main", mainLengt, mainStart);
-                ctr += mainLengt * 4;
-            }
-            if (ctr == factorialStart - 4) {
-                cout << endl;
-                printFunc(f, "mmul", factorialLength, factorialStart);
-                ctr += factorialLength * 4;
-            }
-            ctr += 4;
-        }
+        ElfParser parser = ElfParser(f);
+        parser.parse();
+        int textSize = parser.getSizeOfText();
+        cout << textSize << "\n";
+        printFunc(f, "main/mmul", textSize, parser.getEntryPoint());
     } catch (const ifstream::failure& e) {
         cout << e.what() << '\n';
     }

@@ -7,6 +7,8 @@ add_executable (RiscV-Disassembler
 	Instruction.h Instruction.cpp
 	Storage.h Storage.cpp
 	Type.h
+	ElfParser.h ElfParser.cpp
 )
 
 add_subdirectory(Types)
+add_subdirectory(Structs)
