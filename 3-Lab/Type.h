@@ -1,3 +1,5 @@
+#pragma once
+
 enum Type : char {
     R,
     I,

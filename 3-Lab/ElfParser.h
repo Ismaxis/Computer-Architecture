@@ -8,10 +8,10 @@
 #include "Structs/ProgrammHeader.h"
 #include "Structs/SectionHeader.h"
 #include "Structs/SymTabEntry.h"
+#include "SymTabInfoEnum.h"
 class ElfParser {
     static const uint8_t SYM_TAB = 2;
     static const uint8_t STR_TAB = 3;
-    static const uint8_t STT_FUNC = 2;
 
    public:
     ElfParser(std::ifstream& f);
@@ -19,6 +19,7 @@ class ElfParser {
 
     void parse();
     void printDotText();
+    void printSymtab();
 
    private:
     std::ifstream& file;

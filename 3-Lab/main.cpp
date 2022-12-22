@@ -13,6 +13,8 @@ int main(int argc, char const* argv[]) {
         ElfParser parser = ElfParser(f);
         parser.parse();
         parser.printDotText();
+        std::cout << std::endl;
+        parser.printSymtab();
     } catch (const std::ifstream::failure& e) {
         std::cout << "ifstream::failure in main: " << e.what() << '\n';
     } catch (std::runtime_error* e) {

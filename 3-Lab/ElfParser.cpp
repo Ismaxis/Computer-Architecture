@@ -51,6 +51,7 @@ void ElfParser::parse() {
             textAddress = sectionHeaders[i].offset;
             textVirtualAddress = sectionHeaders[i].addr;
             textSize = sectionHeaders[i].size;
+            break;
         }
     }
 
@@ -70,7 +71,7 @@ void ElfParser::parse() {
     bufferStream.rdbuf()->pubsetbuf(buff + symTabAddress - bufferOffset, bufferSize - (symTabAddress - bufferOffset));
     for (int i = 0; i < symTabEntriesCount; i++) {
         symTableEntries[i].fill(bufferStream);
-        if (symTableEntries[i].info % 0b00010000 == STT_FUNC) {
+        if (symTableEntries[i].info % 0b00010000 == STT::FUNC) {
             labels[symTableEntries[i].value] = getStringFromStrTab(symTableEntries[i].name);
         }
     }
@@ -86,6 +87,18 @@ void ElfParser::printDotText() {
             printf("%08x   <%s>:\n", curAddr, labels[curAddr].c_str());
         }
         instructions.at(i)->toString();
+    }
+}
+
+void ElfParser::printSymtab() {
+    printf("Symbol Value          	  Size Type 	Bind 	 Vis   	   Index  Name\n");
+    for (int i = 0; i < symTabEntriesCount; i++) {
+        SymTabEntry curEntry = symTableEntries[i];
+
+        printf("[%4i] 0x%-15X %5i %-8s %-8s %-8s %6s %s\n",
+               i, curEntry.value, curEntry.size, toStringSTT((STT)(curEntry.info % 0b10000)).c_str(),
+               toStringSTB((STB)(curEntry.info >> 4)).c_str(), toStringSTV((STV)curEntry.other).c_str(), toStringSHN((SHN)curEntry.shndx).c_str(),
+               getStringFromStrTab(curEntry.name).c_str());
     }
 }
 
