@@ -74,14 +74,25 @@ inline std::string toStringSTV(STV type) {
 
 enum SHN : int {
     UNDEF = 0,
+    LORESERVE = 0xff00,
     ABS = 0xfff1,
+    SHN_COMMON = 0xfff2,
+    HIRESERVE = 0xffff,
 };
 
 inline std::string toStringSHN(SHN type) {
     if (type == UNDEF) {
         return "UNDEF";
+    } else if (type == LORESERVE) {
+        return "LORESERVE";
     } else if (type == ABS) {
         return "ABS";
+    } else if (type == SHN_COMMON) {
+        return "COMMON";
+    } else if (type == HIRESERVE) {
+        return "HIRESERVE";
+    } else if (0xff00 <= type && type <= 0xff1f) {
+        return "SPEC: " + std::to_string(type);
     } else {
         return std::to_string(type);
     }

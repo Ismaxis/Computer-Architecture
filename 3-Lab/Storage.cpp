@@ -10,4 +10,5 @@ std::unordered_map<uint8_t, Type> Storage::typesMap = {
     {0b0100011, Type::S},
     {0b0010011, Type::I},
     {0b0110011, Type::R},
+    {0b1110011, Type::E},
 };

@@ -81,6 +81,7 @@ void ElfParser::parse() {
 }
 
 void ElfParser::printDotText(FILE* out) {
+    fprintf(out, ".text\n");
     int curAddr = textVirtualAddress;
     for (int i = 0; i < instructions.size(); i++, curAddr += 4) {
         if (labels.count(curAddr) > 0) {
@@ -91,7 +92,8 @@ void ElfParser::printDotText(FILE* out) {
 }
 
 void ElfParser::printSymtab(FILE* out) {
-    fprintf(out, "Symbol Value          	  Size Type 	Bind 	 Vis   	   Index  Name\n");
+    fprintf(out, ".symtab\n");
+    fprintf(out, "Symbol Value          	  Size Type 	 Bind 	 Vis   	  Index Name\n");
     for (int i = 0; i < symTabEntriesCount; i++) {
         SymTabEntry curEntry = symTableEntries[i];
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <BType.h>
+#include <EType.h>
 #include <IAddrType.h>
 #include <IType.h>
 #include <JType.h>
@@ -28,6 +29,8 @@ class InstructionFabric {
             return new UType(bits);
         } else if (type == Type::J) {
             return new JType(bits);
+        } else if (type == Type::E) {
+            return new EType(bits);
         } else {
             return new UnknownType(bits);
         }

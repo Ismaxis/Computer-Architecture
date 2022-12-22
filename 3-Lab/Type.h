@@ -9,4 +9,5 @@ enum Type : char {
     U,
     J,
     UNKNOWN,
+    E,
 };
