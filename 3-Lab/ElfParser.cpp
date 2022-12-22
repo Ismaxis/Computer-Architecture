@@ -1,9 +1,7 @@
 #include "ElfParser.h"
 
 #include <sstream>
-ElfParser::ElfParser(std::ifstream& f) : file(f) {
-    elfHeader = ElfHeader();
-}
+ElfParser::ElfParser(std::ifstream& f) : file(f) {}
 
 void ElfParser::parse() {
     // ELF HEADER

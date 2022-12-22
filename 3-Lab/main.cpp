@@ -6,25 +6,43 @@
 #include "ElfParser.h"
 #include "InstructionFabric.h"
 
-int main(int argc, char const* argv[]) {
-    std::ifstream input;
-    FILE* output;
-    output = fopen("resources/myOut.s", "w");
+ElfParser* parseFile(std::ifstream& input) {
+    ElfParser* parser = new ElfParser(input);
     try {
-        input.open("resources/out.elf", std::ios::binary);
-        ElfParser parser = ElfParser(input);
-        parser.parse();
-        parser.printDotText(output);
-        fprintf(output, "\n");
-        std::cout << std::endl;
-        parser.printSymtab(output);
+        parser->parse();
     } catch (const std::ifstream::failure& e) {
-        std::cout << "ifstream::failure in main: " << e.what() << '\n';
+        std::cout << "ifstream::failure: " << e.what() << '\n';
     } catch (std::runtime_error* e) {
-        std::cout << "Error in main: " << e->what() << std::endl;
+        std::cout << "Error: " << e->what() << std::endl;
+    }
+    return parser;
+};
+
+int main(int argc, char const* argv[]) {
+    if (argc < 3) {
+        std::cout << "2 arguments expected, " + std::to_string(argc - 1) + " found\n";
+        return 0;
     }
 
-    fclose(output);
+    std::ifstream input;
+    input.open(argv[1], std::ios::binary);
+
+    if (!input.is_open()) {
+        std::cout << "Can't open input file";
+        return 0;
+    }
+    ElfParser* parser = parseFile(input);
     input.close();
+
+    FILE* output = fopen(argv[2], "w");
+    if (output == NULL) {
+        std::cout << "Can't open output file";
+        return 0;
+    }
+    parser->printDotText(output);
+    fprintf(output, "\n");
+    parser->printSymtab(output);
+    delete parser;
+    fclose(output);
     return 0;
 }

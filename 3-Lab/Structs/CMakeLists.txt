@@ -6,5 +6,5 @@ file (GLOB h
 )
 
 
-target_sources(RiscV-Disassembler PRIVATE ${h})
-target_include_directories(RiscV-Disassembler PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_sources(${executableName} PRIVATE ${h})
+target_include_directories(${executableName} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
