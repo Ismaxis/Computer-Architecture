@@ -2,12 +2,12 @@
 
 class UType : public Instruction {
    public:
-	explicit UType(uint32_t bits) : Instruction(bits) {}
+    explicit UType(uint32_t bits) : Instruction(bits) {}
     ~UType() override = default;
 
    private:
     std::string instructionString() const override {
-        return getMnemonic() + '\t' + parseRd(bits) + ", " + "0x" + parseImm();
+        return getMnemonic() + '\t' + parseRd(bits) + ", " + parseImm();
     }
 
     std::string parseImm() const {
@@ -17,12 +17,11 @@ class UType : public Instruction {
             imm += isBitSet(bits, i) ? (1 << i) : 0;
         }
 
-        const std::string s = toHexString(imm);
-        return s.substr(0, s.length() - 3);
+        return std::to_string(imm);
     }
 
     std::string getMnemonic() const {
-	    const uint8_t opcode = parseOpcodeBits(bits);
+        const uint8_t opcode = parseOpcodeBits(bits);
         if (opcode == 0b0110111) {
             return "lui";
         } else if (opcode == 0b0010111) {
