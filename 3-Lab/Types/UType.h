@@ -27,7 +27,7 @@ class UType : public Instruction {
         } else if (opcode == 0b0010111) {
             return "auipc";
         } else {
-            throw new std::runtime_error("Opcode '" + std::to_string(opcode) + "' doesn't match UType instruction");
+            throw std::runtime_error("Opcode '" + std::to_string(opcode) + "' doesn't match UType instruction");
         }
     }
 };

@@ -1,6 +1,6 @@
 #include "Instruction.h"
 
-Instruction::Instruction(uint32_t bits) : bits(bits){};
+Instruction::Instruction(const uint32_t bits) : bits(bits){};
 
 std::string Instruction::addressString() const {
     return toHexString(address);
@@ -12,7 +12,7 @@ void Instruction::toString(FILE* out) const {
 
 Instruction::~Instruction() = default;
 
-void Instruction::setAddress(uint32_t givenAddress) {
+void Instruction::setAddress(const uint32_t givenAddress) {
     address = givenAddress;
 }
 
@@ -25,7 +25,7 @@ uint8_t Instruction::parseOpcodeBits(uint32_t bits) {
     return opcode;
 }
 
-uint8_t Instruction::parseFunct3(uint32_t bits) {
+uint8_t Instruction::parseFunct3(const uint32_t bits) {
     uint8_t funct3 = 0;
 
     for (size_t i = 0; i < 3; i++) {
@@ -35,36 +35,36 @@ uint8_t Instruction::parseFunct3(uint32_t bits) {
     return funct3;
 }
 
-uint8_t Instruction::parseFunct7(uint32_t bits) {
+uint8_t Instruction::parseFunct7(const uint32_t bits) {
     uint8_t funct7 = 0;
 
-    for (size_t i = 0; i < 7; i++) {
+    for (int i = 0; i < 7; i++) {
         funct7 += isBitSet(bits, i + 25) > 0 ? (1 << i) : 0;
     }
 
     return funct7;
 }
 
-uint8_t Instruction::parseRegIndex(uint32_t bits, int startAddress) {
+uint8_t Instruction::parseRegIndex(const uint32_t bits, const int startAddress) {
     uint8_t index = 0;
-    for (size_t i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++) {
         index += isBitSet(bits, i + startAddress) > 0 ? (1 << i) : 0;
     }
     return index;
 }
 
-std::string Instruction::parseRd(uint32_t bits) {
+std::string Instruction::parseRd(const uint32_t bits) {
     return Storage::getRegisterName(parseRegIndex(bits, 7));
 }
 
-std::string Instruction::parseRs1(uint32_t bits) {
+std::string Instruction::parseRs1(const uint32_t bits) {
     return Storage::getRegisterName(parseRegIndex(bits, 15));
 }
 
-std::string Instruction::parseRs2(uint32_t bits) {
+std::string Instruction::parseRs2(const uint32_t bits) {
     return Storage::getRegisterName(parseRegIndex(bits, 20));
 }
 
-bool Instruction::isBitSet(uint32_t bits, int index) {
+bool Instruction::isBitSet(const uint32_t bits, const int index) {
     return (bits & (1 << index)) > 0;
 }

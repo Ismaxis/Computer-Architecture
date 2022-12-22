@@ -12,8 +12,8 @@
 
 class InstructionFabric {
    public:
-    static Instruction* createInsruction(uint32_t bits) {
-        Type type = Storage::getType(
+    static Instruction* createInstruction(const uint32_t bits) {
+	    const Type type = Storage::getType(
             Instruction::parseOpcodeBits(bits));
         if (type == Type::R) {
             return new RType(bits);

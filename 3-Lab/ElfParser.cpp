@@ -8,16 +8,16 @@ void ElfParser::parse() {
     elfHeader.fill(file);
 
     // PROGREMM HEADERS
-    programmHeaders = new ProgrammHeader[elfHeader.phnum];
+    programHeaders = new ProgrammHeader[elfHeader.phnum];
     for (int i = 0; i < elfHeader.phnum; i++) {
-        programmHeaders[i].fill(file);
+        programHeaders[i].fill(file);
     }
 
     // SECTION HEADERS
     bufferOffset = elfHeader.phoff + elfHeader.phnum * elfHeader.phentsize;
     const int bufferSize = elfHeader.shoff - bufferOffset;
 
-    char* buff = new char[bufferSize];
+    const auto buff = new char[bufferSize];
     for (int i = 0; i < bufferSize; i++) {
         file.read(&buff[i], sizeof(char));
     }
@@ -53,14 +53,10 @@ void ElfParser::parse() {
         }
     }
 
-    for (int curAddr = 0; curAddr < textSize; curAddr += 4) {
-        try {
-            Instruction* newInstr = InstructionFabric::createInsruction(*(uint32_t*)(&buff[curAddr]));
-            newInstr->setAddress(textVirtualAddress + curAddr);
-            instructions.push_back(newInstr);
-        } catch (std::runtime_error* e) {
-            std::cout << "Error: " << e->what() << std::endl;
-        }
+    for (uint32_t curAddress = 0; curAddress < textSize; curAddress += 4) {
+        Instruction* newInstr = InstructionFabric::createInstruction(*reinterpret_cast<uint32_t*>(&buff[curAddress]));
+        newInstr->setAddress(textVirtualAddress + curAddress);
+        instructions.push_back(newInstr);
     }
 
     // SYMBOL TABLE
@@ -80,45 +76,48 @@ void ElfParser::parse() {
 
 void ElfParser::printDotText(FILE* out) {
     fprintf(out, ".text\n");
-    int curAddr = textVirtualAddress;
-    for (int i = 0; i < instructions.size(); i++, curAddr += 4) {
-        if (labels.count(curAddr) > 0) {
-            fprintf(out, "%08x   <%s>:\n", curAddr, labels[curAddr].c_str());
+    int curAddress = textVirtualAddress;
+    for (int i = 0; i < instructions.size(); i++, curAddress += 4) {
+        if (labels.count(curAddress) > 0) {
+            fprintf(out, "%08x   <%s>:\n", curAddress, labels[curAddress].c_str());
         }
         instructions.at(i)->toString(out);
     }
 }
 
-void ElfParser::printSymtab(FILE* out) {
+void ElfParser::printSymtab(FILE* out) const {
     fprintf(out, ".symtab\n");
     fprintf(out, "Symbol Value          	  Size Type 	 Bind 	 Vis   	  Index Name\n");
     for (int i = 0; i < symTabEntriesCount; i++) {
         SymTabEntry curEntry = symTableEntries[i];
 
         fprintf(out, "[%4i] 0x%-15X %5i %-8s %-8s %-8s %6s %s\n",
-                i, curEntry.value, curEntry.size, toStringSTT((STT)(curEntry.info % 0b10000)).c_str(),
-                toStringSTB((STB)(curEntry.info >> 4)).c_str(), toStringSTV((STV)curEntry.other).c_str(), toStringSHN((SHN)curEntry.shndx).c_str(),
+                i, curEntry.value, curEntry.size, 
+				toStringSTT(static_cast<STT>(curEntry.info % 0b10000)).c_str(),
+                toStringSTB(static_cast<STB>(curEntry.info >> 4)).c_str(), 
+				toStringSTV(static_cast<STV>(curEntry.other)).c_str(), 
+				toStringSHN(static_cast<SHN>(curEntry.shndx)).c_str(),
                 getStringFromStrTab(curEntry.name).c_str());
     }
 }
 
-void ElfParser::fillStrTab(char* buff) {
+void ElfParser::fillStrTab(const char* buff) {
     strTab = new char[strTabSize];
     for (int j = 0; j < strTabSize; j++) {
         strTab[j] = buff[strTabAddress + j - bufferOffset];
     }
 }
 
-void ElfParser::fillShStrTab(char* buff) {
+void ElfParser::fillShStrTab(const char* buff) {
     shStrTab = new char[shStrTabSize];
     for (int j = 0; j < shStrTabSize; j++) {
         shStrTab[j] = buff[shStrTabAddress + j - bufferOffset];
     }
 }
 
-std::string ElfParser::getStringFromStrTab(uint32_t offset) {
+std::string ElfParser::getStringFromStrTab(const uint32_t offset) const {
     if (offset > strTabSize) {
-        throw new std::runtime_error("strTab index '" + std::to_string(offset) + "' is out of bound for size '" + std::to_string(strTabSize) + "'");
+        throw std::runtime_error("strTab index '" + std::to_string(offset) + "' is out of bound for size '" + std::to_string(strTabSize) + "'");
     }
 
     std::stringstream ss;
@@ -131,9 +130,9 @@ std::string ElfParser::getStringFromStrTab(uint32_t offset) {
     return ss.str();
 }
 
-std::string ElfParser::getStringFromShStrTab(uint32_t offset) {
+std::string ElfParser::getStringFromShStrTab(const uint32_t offset) const {
     if (offset > shStrTabSize) {
-        throw new std::runtime_error("shStrTab index '" + std::to_string(offset) + "' is out of bound for size '" + std::to_string(shStrTabSize) + "'");
+        throw std::runtime_error("shStrTab index '" + std::to_string(offset) + "' is out of bound for size '" + std::to_string(shStrTabSize) + "'");
     }
 
     std::stringstream ss;
@@ -147,10 +146,10 @@ std::string ElfParser::getStringFromShStrTab(uint32_t offset) {
 }
 
 ElfParser::~ElfParser() {
-    for (auto& instruction : instructions) {
+    for (const auto& instruction : instructions) {
         delete instruction;
     }
-    delete[] programmHeaders;
+    delete[] programHeaders;
     delete[] sectionHeaders;
     delete[] symTableEntries;
     delete[] strTab;

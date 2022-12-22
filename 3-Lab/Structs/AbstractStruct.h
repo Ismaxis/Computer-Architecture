@@ -5,10 +5,11 @@
 class AbstractStruct {
    protected:
     template <typename T>
-    void read(T& place, int bytes, std::istream& f) {
+    static void read(T& place, const int bytes, std::istream& f) {
         f.read((char*)(&place), bytes);
     }
 
    public:
+    virtual ~AbstractStruct() = default;
     virtual void fill(std::istream& f) = 0;
 };

@@ -11,3 +11,4 @@ file(GLOB cpp
 
 target_sources(${executableName} PRIVATE ${h} ${cpp})
 target_include_directories(${executableName} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+    

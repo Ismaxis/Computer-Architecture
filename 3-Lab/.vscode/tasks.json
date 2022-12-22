@@ -9,7 +9,7 @@
                 "-g",
                 "${file}",
                 "-o",
-                "${fileDirname}\\out\\${fileBasenameNoExtension}.exe",
+                "${fileDirname}\\build\\${fileBasenameNoExtension}.exe",
                 "-I", 
                 "${fileDirname}\\Types",
                 "-I", 

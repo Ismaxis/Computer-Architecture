@@ -39,9 +39,13 @@ class Instruction {
     static bool isBitSet(uint32_t bits, int index);
 
     template <typename T>
-    static std::string toHexString(T number) {
-        std::ostringstream ss;
-        ss << std::setfill('0') << std::setw(sizeof(T) * 2) << std::hex << number;
-        return ss.str();
-    }
+    static std::string toHexString(T number);
 };
+
+template <typename T>
+std::string Instruction::toHexString(T number)
+{
+	std::ostringstream ss;
+	ss << std::setfill('0') << std::setw(sizeof(T) * 2) << std::hex << number;
+	return ss.str();
+}

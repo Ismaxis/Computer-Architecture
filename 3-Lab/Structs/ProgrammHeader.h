@@ -4,14 +4,14 @@
 
 class ProgrammHeader : AbstractStruct {
    public:
-    Elf32_Word type;
-    Elf32_Off offset;
-    Elf32_Addr vaddr;
-    Elf32_Addr paddr;
-    Elf32_Word filesz;
-    Elf32_Word memsz;
-    Elf32_Word flags;
-    Elf32_Word align;
+    Elf32_Word type{};
+    Elf32_Off offset{};
+    Elf32_Addr vaddr{};
+    Elf32_Addr paddr{};
+    Elf32_Word filesz{};
+    Elf32_Word memsz{};
+    Elf32_Word flags{};
+    Elf32_Word align{};
 
     void fill(std::istream& f) override {
         read(type, sizeof(type), f);

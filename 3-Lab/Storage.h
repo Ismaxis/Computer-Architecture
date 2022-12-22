@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 #include <unordered_map>
 
@@ -5,12 +6,12 @@
 
 class Storage {
    private:
-    Storage();
+    Storage() = delete;
 
     static std::unordered_map<uint8_t, Type> typesMap;
 
    public:
-    static Type getType(uint8_t opcode) {
+    static Type getType(const uint8_t opcode) {
         if (typesMap.count(opcode) > 0) {
             return typesMap[opcode];
         } else {
@@ -18,7 +19,7 @@ class Storage {
         }
     }
 
-    static std::string getRegisterName(uint8_t index) {
+    static std::string getRegisterName(const uint8_t index) {
         if (index == 0) {
             return "zero";
         } else if (index == 1) {

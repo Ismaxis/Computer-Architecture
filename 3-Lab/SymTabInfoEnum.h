@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+
 enum STT : char {
     NOTYPE = 0,
     OBJECT = 1,
@@ -13,7 +14,7 @@ enum STT : char {
     HIPROC = 15,
 };
 
-inline std::string toStringSTT(STT type) {
+inline std::string toStringSTT(const STT type) {
     if (type == NOTYPE) {
         return "NOTYPE";
     } else if (type == SECTION) {
@@ -39,7 +40,7 @@ enum STB : char {
     // HIPROC = 15,
 };
 
-inline std::string toStringSTB(STB type) {
+inline std::string toStringSTB(const STB type) {
     if (type == LOCAL) {
         return "LOCAL";
     } else if (type == GLOBAL) {
@@ -58,7 +59,7 @@ enum STV : char {
     PROTECTED = 3,
 };
 
-inline std::string toStringSTV(STV type) {
+inline std::string toStringSTV(const STV type) {
     if (type == DEFAULT) {
         return "DEFAULT";
     } else if (type == INTERNAL) {
@@ -80,7 +81,7 @@ enum SHN : int {
     HIRESERVE = 0xffff,
 };
 
-inline std::string toStringSHN(SHN type) {
+inline std::string toStringSHN(const SHN type) {
     if (type == UNDEF) {
         return "UNDEF";
     } else if (type == LORESERVE) {

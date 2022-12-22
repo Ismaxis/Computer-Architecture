@@ -10,22 +10,22 @@
 #include "Structs/SymTabEntry.h"
 #include "SymTabInfoEnum.h"
 class ElfParser {
-    static const uint8_t SYM_TAB = 2;
-    static const uint8_t STR_TAB = 3;
+    static constexpr uint8_t SYM_TAB = 2;
+    static constexpr uint8_t STR_TAB = 3;
 
    public:
-    ElfParser(std::ifstream& f);
+    explicit ElfParser(std::ifstream& f);
     ~ElfParser();
 
     void parse();
     void printDotText(FILE* out);
-    void printSymtab(FILE* out);
+    void printSymtab(FILE* out) const;
 
    private:
     std::ifstream& file;
 
     ElfHeader elfHeader;
-    ProgrammHeader* programmHeaders;
+    ProgrammHeader* programHeaders;
 
     int bufferOffset;  // offset of address in buff relative to file
     SectionHeader* sectionHeaders;
@@ -38,16 +38,16 @@ class ElfParser {
     // STR_TAB
     uint32_t strTabAddress;
     uint32_t strTabSize;
-    void fillStrTab(char* buff);
+    void fillStrTab(const char* buff);
     char* strTab;
     // SH_STR_TAB
     uint32_t shStrTabAddress;
     uint32_t shStrTabSize;
-    void fillShStrTab(char* buff);
+    void fillShStrTab(const char* buff);
     char* shStrTab;
 
-    std::string getStringFromStrTab(uint32_t offset);
-    std::string getStringFromShStrTab(uint32_t offset);
+    std::string getStringFromStrTab(uint32_t offset) const;
+    std::string getStringFromShStrTab(uint32_t offset) const;
 
     // .text
     uint32_t textAddress;
