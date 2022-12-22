@@ -18,8 +18,8 @@ class ElfParser {
     ~ElfParser();
 
     void parse();
-    void printDotText();
-    void printSymtab();
+    void printDotText(FILE* out);
+    void printSymtab(FILE* out);
 
    private:
     std::ifstream& file;
