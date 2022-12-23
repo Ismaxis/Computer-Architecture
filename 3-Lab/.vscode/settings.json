@@ -66,6 +66,7 @@
         "xutility": "cpp"
     },
     "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [
-        "clang-diagnostic-error"
-    ]
+        "clang-analyzer-*"
+    ],
+    "cmake.generator": "Sublime Text 2 - MinGW Makefiles"
 }

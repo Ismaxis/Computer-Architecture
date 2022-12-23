@@ -62,7 +62,9 @@ void ElfParser::parse() {
     // SYMBOL TABLE
     symTableEntries = new SymTabEntry[symTabEntriesCount];
     std::stringstream bufferStream;
-    bufferStream.rdbuf()->pubsetbuf(buff + symTabAddress - bufferOffset, bufferSize - (symTabAddress - bufferOffset));
+    // bufferStream.rdbuf()->pubsetbuf(buff + symTabAddress - bufferOffset, bufferSize - (symTabAddress - bufferOffset));
+    bufferStream.write(buff + symTabAddress - bufferOffset, bufferSize - (symTabAddress - bufferOffset));
+    bufferStream.seekg(0);
     for (int i = 0; i < symTabEntriesCount; i++) {
         symTableEntries[i].fill(bufferStream);
         if (symTableEntries[i].info % 0b00010000 == STT::FUNC) {
@@ -92,11 +94,11 @@ void ElfParser::printSymtab(FILE* out) const {
         SymTabEntry curEntry = symTableEntries[i];
 
         fprintf(out, "[%4i] 0x%-15X %5i %-8s %-8s %-8s %6s %s\n",
-                i, curEntry.value, curEntry.size, 
-				toStringSTT(static_cast<STT>(curEntry.info % 0b10000)).c_str(),
-                toStringSTB(static_cast<STB>(curEntry.info >> 4)).c_str(), 
-				toStringSTV(static_cast<STV>(curEntry.other)).c_str(), 
-				toStringSHN(static_cast<SHN>(curEntry.shndx)).c_str(),
+                i, curEntry.value, curEntry.size,
+                toStringSTT(static_cast<STT>(curEntry.info % 0b10000)).c_str(),
+                toStringSTB(static_cast<STB>(curEntry.info >> 4)).c_str(),
+                toStringSTV(static_cast<STV>(curEntry.other)).c_str(),
+                toStringSHN(static_cast<SHN>(curEntry.shndx)).c_str(),
                 getStringFromStrTab(curEntry.name).c_str());
     }
 }
