@@ -30,17 +30,6 @@ class BType : public Instruction {
         return toHexString(address + imm);
     }
 
-    // static void printBin(uint32_t bits) {  // TODO remove
-    //     std::cout << '\n';
-    //     for (int i = 31; i >= 0; i--) {
-    //         if (i % 4 == 3) {
-    //             std::cout << ' ';
-    //         }
-    //         std::cout << isBitSet(bits, i) ? '1' : '0';
-    //     }
-    //     std::cout << '\n';
-    // }
-
     std::string getMnemonic() const {
         return mnemonics[parseFunct3(bits)];
     }

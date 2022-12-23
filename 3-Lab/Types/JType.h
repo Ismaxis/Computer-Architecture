@@ -3,7 +3,7 @@
 
 class JType : public Instruction {
    public:
-	explicit JType(uint32_t bits) : Instruction(bits) {}
+    explicit JType(uint32_t bits) : Instruction(bits) {}
     ~JType() override = default;
 
    private:
@@ -29,7 +29,7 @@ class JType : public Instruction {
         return toHexString(address + imm);
     }
 
-	std::string getMnemonic() const {
+    static std::string getMnemonic() {
         return "jal";
     }
 };

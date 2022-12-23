@@ -31,6 +31,7 @@ int main(const int argc, char const* argv[]) {
         std::cout << "Can't open input file";
         return 0;
     }
+
     ElfParser* parser = parseFile(input);
     input.close();
 
@@ -39,9 +40,11 @@ int main(const int argc, char const* argv[]) {
         std::cout << "Can't open output file";
         return 0;
     }
+
     parser->printDotText(output);
     fprintf(output, "\n");
     parser->printSymtab(output);
+
     fclose(output);
     delete parser;
     return 0;

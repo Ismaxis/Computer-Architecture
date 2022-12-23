@@ -43,9 +43,8 @@ class Instruction {
 };
 
 template <typename T>
-std::string Instruction::toHexString(T number)
-{
+std::string Instruction::toHexString(T number) {
 	std::ostringstream ss;
 	ss << std::setfill('0') << std::setw(sizeof(T) * 2) << std::hex << number;
-	return ss.str();
+    return ss.str();
 }

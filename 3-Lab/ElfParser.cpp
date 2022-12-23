@@ -72,7 +72,6 @@ void ElfParser::parse() {
         }
     }
 
-    file.close();
     delete[] buff;
 }
 
