@@ -7,7 +7,7 @@ class UType : public Instruction {
 
    private:
     std::string instructionString() const override {
-        return getMnemonic() + '\t' + parseRd(bits) + ", " + parseImm();
+        return getMnemonic() + '\t' + parseRd(bits) + ", 0x" + parseImm();
     }
 
     std::string parseImm() const {
@@ -17,7 +17,8 @@ class UType : public Instruction {
             imm += isBitSet(bits, i) ? (1 << i) : 0;
         }
 
-        return std::to_string(imm);
+        const std::string s = toHexString(imm);
+        return s.substr(0, s.length() - 3);
     }
 
     std::string getMnemonic() const {
