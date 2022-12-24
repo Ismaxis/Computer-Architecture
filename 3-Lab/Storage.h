@@ -33,7 +33,7 @@ class Storage {
         } else if (5 <= index && index <= 7) {
             return "t" + std::to_string(index - 5);
         } else if (index == 8) {
-            return "s0/fp";
+            return "s0";
         } else if (index == 9) {
             return "s1";
         } else if (10 <= index && index <= 27) {
@@ -43,7 +43,7 @@ class Storage {
         } else if (28 <= index && index <= 31) {
             return "t" + std::to_string(index - 28 + 3);
         } else {
-            return "error";
+            return "invalid reg index: " + std::to_string(index);
         }
     }
 };

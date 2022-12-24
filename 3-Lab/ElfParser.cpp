@@ -107,6 +107,14 @@ void ElfParser::printSymtab(std::ostream& out) const {
         << "Symbol Value          	  Size Type 	 Bind 	 Vis   	  Index Name\n";
     for (int i = 0; i < symTabEntriesCount; i++) {
         SymTabEntry curEntry = symTableEntries[i];
+
+        std::string name;
+        if (curEntry.info % 0b00010000 == STT::SECTION) {
+            name = getStringFromShStrTab(sectionHeaders[curEntry.shndx].name);
+        } else {
+            name = getStringFromStrTab(curEntry.name);
+        }
+
         constexpr int buffSize = 128;
         char buff[buffSize];
         snprintf(buff, buffSize, "[%4i] 0x%-15X %5i %-8s %-8s %-8s %6s %s", i, curEntry.value, curEntry.size,
@@ -114,7 +122,7 @@ void ElfParser::printSymtab(std::ostream& out) const {
                  toStringSTB(static_cast<STB>(curEntry.info >> 4)).c_str(),
                  toStringSTV(static_cast<STV>(curEntry.other)).c_str(),
                  toStringSHN(static_cast<SHN>(curEntry.shndx)).c_str(),
-                 getStringFromStrTab(curEntry.name).c_str());
+                 name.c_str());
         out << buff << "\n";
     }
 }
