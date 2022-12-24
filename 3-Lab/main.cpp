@@ -1,10 +1,10 @@
+#include <ElfParser.h>
+#include <InstructionFabric.h>
+
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <vector>
-
-#include "ElfParser.h"
-#include "InstructionFabric.h"
 
 ElfParser* parseFile(std::ifstream& input, const char* path) {
     input.open(path, std::ios_base::binary);

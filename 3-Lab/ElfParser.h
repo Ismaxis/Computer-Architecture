@@ -1,15 +1,15 @@
 #pragma once
 
+#include <ElfHeader.h>
+#include <InstructionFabric.h>
+#include <ProgrammHeader.h>
+#include <SectionHeader.h>
+#include <SymTabEntry.h>
+#include <SymTabInfoEnum.h>
+
 #include <fstream>
 #include <sstream>
 #include <vector>
-
-#include "InstructionFabric.h"
-#include "Structs/ElfHeader.h"
-#include "Structs/ProgrammHeader.h"
-#include "Structs/SectionHeader.h"
-#include "Structs/SymTabEntry.h"
-#include "SymTabInfoEnum.h"
 class ElfParser {
     static constexpr uint8_t SYM_TAB = 2;
     static constexpr uint8_t STR_TAB = 3;

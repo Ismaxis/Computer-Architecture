@@ -1,8 +1,8 @@
 #pragma once
+#include <Type.h>
+
 #include <string>
 #include <unordered_map>
-
-#include "Type.h"
 
 class Storage {
    private:

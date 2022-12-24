@@ -1,4 +1,4 @@
-#include "../Instruction.h"
+#include <Instruction.h>
 
 class RType : public Instruction {
    private:

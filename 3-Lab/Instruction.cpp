@@ -1,4 +1,4 @@
-#include "Instruction.h"
+#include <Instruction.h>
 
 Instruction::Instruction(const uint32_t bits) : bits(bits){};
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "../Instruction.h"
+#include <Instruction.h>
 
 class EType : public Instruction {
    public:

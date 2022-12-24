@@ -1,8 +1,8 @@
 #pragma once
+#include <Storage.h>
+
 #include <fstream>
 #include <iomanip>
-
-#include "Storage.h"
 
 class Instruction {
    protected:

@@ -13,6 +13,6 @@ file (GLOB cpp
 )
 
 add_executable (${executableName} ${h} ${cpp})
-
+target_include_directories(${executableName} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 add_subdirectory(Instructions)
 add_subdirectory(Structs)
