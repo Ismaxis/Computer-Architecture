@@ -1,4 +1,10 @@
 {
+    "cmake.debugConfig": {
+        "args": [
+            ".\\resources\\out.elf",
+            ".\\resources\\out.exept"
+        ]
+    },
     "files.associations": {
         "iostream": "cpp",
         "istream": "cpp",
@@ -68,5 +74,5 @@
     "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [
         "clang-analyzer-*"
     ],
-    "cmake.generator": "Sublime Text 2 - MinGW Makefiles"
+    "cmake.generator": "MinGW Makefiles"
 }

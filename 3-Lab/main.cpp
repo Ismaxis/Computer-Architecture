@@ -6,17 +6,25 @@
 #include "ElfParser.h"
 #include "InstructionFabric.h"
 
-ElfParser* parseFile(std::ifstream& input) {
-    const auto parser = new ElfParser(input);
-    try {
-        parser->parse();
-    } catch (const std::ifstream::failure& e) {
-        std::cout << "ifstream::failure: " << e.what() << '\n';
-    } catch (std::runtime_error& e) {
-        std::cout << "Parse error: " << e.what() << std::endl;
+ElfParser* parseFile(const char* path) {
+    std::ifstream input;
+    input.open(path, std::ios_base::binary);
+    if (!input.is_open()) {
+        throw std::ios_base::failure("Can`t open input file");
     }
+
+    const auto parser = new ElfParser(input);
+    parser->parse();
     return parser;
 };
+
+FILE* openOutFile(const char* path) {
+    FILE* output;
+    if (fopen_s(&output, path, "w")) {
+        throw std::ios_base::failure("Can`t open output file");
+    }
+    return output;
+}
 
 int main(const int argc, char const* argv[]) {
     if (argc < 3) {
@@ -24,28 +32,27 @@ int main(const int argc, char const* argv[]) {
         return 0;
     }
 
-    std::ifstream input;
-    input.open(argv[1], std::ios::binary);
-
-    if (!input.is_open()) {
-        std::cout << "Can't open input file";
-        return 0;
+    ElfParser* parser = nullptr;
+    try {
+        parser = parseFile(argv[1]);
+        FILE* output = nullptr;
+        try {
+            output = openOutFile(argv[2]);
+            parser->printDotText(output);
+            fprintf(output, "\n");
+            parser->printSymtab(output);
+        } catch (const std::ios_base::failure& e) {
+            std::cout << e.what() << std::endl;
+        }
+        if (output != nullptr) {
+            fclose(output);
+        }
+    } catch (std::ios_base::failure& e) {
+        std::cout << e.what() << std::endl;
+    } catch (std::runtime_error& e) {
+        std::cout << e.what() << std::endl;
     }
 
-    ElfParser* parser = parseFile(input);
-    input.close();
-
-    FILE* output = fopen(argv[2], "w");
-    if (output == nullptr) {
-        std::cout << "Can't open output file";
-        return 0;
-    }
-
-    parser->printDotText(output);
-    fprintf(output, "\n");
-    parser->printSymtab(output);
-
-    fclose(output);
     delete parser;
     return 0;
 }
