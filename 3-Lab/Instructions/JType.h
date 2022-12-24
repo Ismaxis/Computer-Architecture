@@ -6,12 +6,20 @@ class JType : public Instruction {
     explicit JType(uint32_t bits) : Instruction(bits) {}
     ~JType() override = default;
 
+    bool needLabel() const override {
+        return true;
+    }
+
+    uint32_t getImmAddr() const override {
+        return address + getImm();
+    }
+
    private:
     std::string instructionString() const override {
         return getMnemonic() + '\t' + parseRd(bits) + ", " + parseImm();
     }
 
-    std::string parseImm() const {
+    int32_t getImm() const {
         int32_t imm = 0;
 
         for (size_t i = 12; i < 20; i++) {
@@ -25,8 +33,11 @@ class JType : public Instruction {
         }
 
         imm -= isBitSet(bits, 31) ? (1 << 20) : 0;
+        return imm;
+    }
 
-        return toHexString(address + imm);
+    std::string parseImm() const {
+        return toHexString(address + getImm());
     }
 
     static std::string getMnemonic() {

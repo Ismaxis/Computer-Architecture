@@ -56,4 +56,5 @@ class ElfParser {
 
     std::vector<Instruction*> instructions;
     std::unordered_map<uint32_t, std::string> labels;
+    // std::unordered_map<uint32_t, int> addressLabels;
 };

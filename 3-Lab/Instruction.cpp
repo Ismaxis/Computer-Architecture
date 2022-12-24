@@ -7,13 +7,21 @@ std::string Instruction::addressString() const {
 }
 
 void Instruction::toString(FILE* out) const {
-    fprintf(out, "   %05x:\t%08x\t%7s\n", address, bits, instructionString().c_str());
+    std::string instrStr = instructionString();
+    if (label.size() > 0) {
+        instrStr += " <" + label + ">";
+    }
+    fprintf(out, "   %05x:\t%08x\t%7s\n", address, bits, instrStr.c_str());
 }
 
 Instruction::~Instruction() = default;
 
 void Instruction::setAddress(const uint32_t givenAddress) {
     address = givenAddress;
+}
+
+void Instruction::setLabel(const std::string givenLabel) {
+    label = givenLabel;
 }
 
 uint8_t Instruction::parseOpcodeBits(uint32_t bits) {

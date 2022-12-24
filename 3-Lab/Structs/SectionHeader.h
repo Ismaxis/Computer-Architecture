@@ -27,4 +27,10 @@ class SectionHeader : AbstractStruct {
         read(addralign, sizeof(addralign), f);
         read(entsize, sizeof(entsize), f);
     }
+
+    static void validateTextSize(uint32_t size) {
+        if (size % 4 != 0) {
+            throw std::runtime_error("Invalid .text size: " + std::to_string(size));
+        }
+    }
 };

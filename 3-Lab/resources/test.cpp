@@ -16,7 +16,7 @@ int8_t a[M][K];
 int16_t b[K][N];
 int32_t c[M][N];
 
-void mmul() {
+void mmul(int salt) {
     int8_t *pa = *a;
     int32_t *pc = *c;
     for (int y = 0; y < M; y++) {
@@ -24,7 +24,7 @@ void mmul() {
             int16_t *pb = *b;
             int32_t s = 0;
             for (int k = 0; k < K; k++) {
-                s += pa[k] * pb[x];
+                s += pa[k] * pb[x] + salt;
                 pb += N;
             }
             pc[x] = s;
@@ -41,8 +41,8 @@ int factorial(int n) {
     return n * factorial(n - 1);
 }
 
-int main() {
-    int a = factorial(2);
-    mmul();
+int main(int argc, const char *argv[]) {
+    int a = factorial(argc);
+    mmul(a);
     return 0;
 }

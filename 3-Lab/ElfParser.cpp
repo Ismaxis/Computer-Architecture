@@ -43,22 +43,6 @@ void ElfParser::parse() {
     fillStrTab(buff);
     fillShStrTab(buff);
 
-    // Search for .text section
-    for (int i = 1; i < elfHeader.shnum; i++) {
-        if (getStringFromShStrTab(sectionHeaders[i].name) == ".text") {
-            textAddress = sectionHeaders[i].offset;
-            textVirtualAddress = sectionHeaders[i].addr;
-            textSize = sectionHeaders[i].size;
-            break;
-        }
-    }
-
-    for (uint32_t curAddress = 0; curAddress < textSize; curAddress += 4) {
-        Instruction* newInstr = InstructionFabric::createInstruction(*reinterpret_cast<uint32_t*>(&buff[curAddress]));
-        newInstr->setAddress(textVirtualAddress + curAddress);
-        instructions.push_back(newInstr);
-    }
-
     // SYMBOL TABLE
     symTableEntries = new SymTabEntry[symTabEntriesCount];
     std::stringstream bufferStream;
@@ -68,6 +52,37 @@ void ElfParser::parse() {
         symTableEntries[i].fill(bufferStream);
         if (symTableEntries[i].info % 0b00010000 == STT::FUNC) {
             labels[symTableEntries[i].value] = getStringFromStrTab(symTableEntries[i].name);
+        }
+    }
+
+    // INSTRUCTIONS
+    for (int i = 1; i < elfHeader.shnum; i++) {
+        if (getStringFromShStrTab(sectionHeaders[i].name) == ".text") {
+            textAddress = sectionHeaders[i].offset;
+            textVirtualAddress = sectionHeaders[i].addr;
+            textSize = sectionHeaders[i].size;
+            SectionHeader::validateTextSize(textSize);
+            break;
+        }
+    }
+
+    int labelsCounter = 0;
+    for (uint32_t curAddress = 0; curAddress < textSize; curAddress += 4) {
+        Instruction* newInstr = InstructionFabric::createInstruction(*reinterpret_cast<uint32_t*>(&buff[curAddress]));
+        newInstr->setAddress(textVirtualAddress + curAddress);
+        if (newInstr->needLabel()) {
+            uint32_t address = newInstr->getImmAddr();
+            if (labels.count(address) <= 0) {
+                labels[address] = "L" + std::to_string(labelsCounter++);
+            }
+        }
+        instructions.push_back(newInstr);
+    }
+
+    for (auto& inst : instructions) {
+        if (inst->needLabel()) {
+            uint32_t address = inst->getImmAddr();
+            inst->setLabel(labels[address]);
         }
     }
 

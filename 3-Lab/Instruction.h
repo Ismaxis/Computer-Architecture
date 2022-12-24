@@ -8,6 +8,7 @@ class Instruction {
    protected:
     uint32_t bits;
     uint32_t address{};
+    std::string label{};
 
     explicit Instruction(uint32_t bits);
 
@@ -21,6 +22,13 @@ class Instruction {
     virtual ~Instruction();
 
     void setAddress(uint32_t givenAddress);
+    void setLabel(std::string givenLabel);
+    virtual bool needLabel() const {
+        return false;
+    }
+    virtual uint32_t getImmAddr() const {
+        return 0;
+    }
 
     static uint8_t parseOpcodeBits(uint32_t bits);
 
@@ -44,7 +52,7 @@ class Instruction {
 
 template <typename T>
 std::string Instruction::toHexString(T number) {
-	std::ostringstream ss;
-	ss << std::setfill('0') << std::setw(sizeof(T) * 2) << std::hex << number;
+    std::ostringstream ss;
+    ss << std::setfill('0') << std::setw(sizeof(T) * 2) << std::hex << number;
     return ss.str();
 }

@@ -14,5 +14,5 @@ file (GLOB cpp
 
 add_executable (${executableName} ${h} ${cpp})
 
-add_subdirectory(Types)
+add_subdirectory(Instructions)
 add_subdirectory(Structs)
