@@ -6,12 +6,15 @@ std::string Instruction::addressString() const {
     return toHexString(address);
 }
 
-void Instruction::toString(FILE* out) const {
+void Instruction::toString(std::ostream& out) const {
     std::string instrStr = instructionString();
     if (label.size() > 0) {
         instrStr += " <" + label + ">";
     }
-    fprintf(out, "   %05x:\t%08x\t%7s\n", address, bits, instrStr.c_str());
+    constexpr int buffSize = 128;
+    char buff[buffSize];
+    snprintf(buff, buffSize, "   %05x:\t%08x\t%7s\n", address, bits, instrStr.c_str());
+    out << buff;
 }
 
 Instruction::~Instruction() = default;

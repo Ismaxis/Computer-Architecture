@@ -1,6 +1,5 @@
 #include "ElfParser.h"
 
-#include <sstream>
 ElfParser::ElfParser(std::ifstream& f) : file(f) {}
 
 void ElfParser::parse() {
@@ -89,30 +88,34 @@ void ElfParser::parse() {
     delete[] buff;
 }
 
-void ElfParser::printDotText(FILE* out) {
-    fprintf(out, ".text\n");
+void ElfParser::printDotText(std::ostream& out) {
+    out << ".text\n";
     int curAddress = textVirtualAddress;
     for (int i = 0; i < instructions.size(); i++, curAddress += 4) {
         if (labels.count(curAddress) > 0) {
-            fprintf(out, "%08x   <%s>:\n", curAddress, labels[curAddress].c_str());
+            constexpr int buffSize = 128;
+            char buff[buffSize];
+            snprintf(buff, buffSize, "%08x   <%s>:\n", curAddress, labels[curAddress].c_str());
+            out << buff;
         }
         instructions.at(i)->toString(out);
     }
 }
 
-void ElfParser::printSymtab(FILE* out) const {
-    fprintf(out, ".symtab\n");
-    fprintf(out, "Symbol Value          	  Size Type 	 Bind 	 Vis   	  Index Name\n");
+void ElfParser::printSymtab(std::ostream& out) const {
+    out << ".symtab\n"
+        << "Symbol Value          	  Size Type 	 Bind 	 Vis   	  Index Name\n";
     for (int i = 0; i < symTabEntriesCount; i++) {
         SymTabEntry curEntry = symTableEntries[i];
-
-        fprintf(out, "[%4i] 0x%-15X %5i %-8s %-8s %-8s %6s %s\n",
-                i, curEntry.value, curEntry.size,
-                toStringSTT(static_cast<STT>(curEntry.info % 0b10000)).c_str(),
-                toStringSTB(static_cast<STB>(curEntry.info >> 4)).c_str(),
-                toStringSTV(static_cast<STV>(curEntry.other)).c_str(),
-                toStringSHN(static_cast<SHN>(curEntry.shndx)).c_str(),
-                getStringFromStrTab(curEntry.name).c_str());
+        constexpr int buffSize = 128;
+        char buff[buffSize];
+        snprintf(buff, buffSize, "[%4i] 0x%-15X %5i %-8s %-8s %-8s %6s %s", i, curEntry.value, curEntry.size,
+                 toStringSTT(static_cast<STT>(curEntry.info % 0b10000)).c_str(),
+                 toStringSTB(static_cast<STB>(curEntry.info >> 4)).c_str(),
+                 toStringSTV(static_cast<STV>(curEntry.other)).c_str(),
+                 toStringSHN(static_cast<SHN>(curEntry.shndx)).c_str(),
+                 getStringFromStrTab(curEntry.name).c_str());
+        out << buff << "\n";
     }
 }
 

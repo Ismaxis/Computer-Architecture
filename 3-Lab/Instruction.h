@@ -1,6 +1,6 @@
 #pragma once
+#include <fstream>
 #include <iomanip>
-#include <sstream>
 
 #include "Storage.h"
 
@@ -17,7 +17,7 @@ class Instruction {
     virtual std::string instructionString() const = 0;
 
    public:
-    virtual void toString(FILE* out) const;
+    virtual void toString(std::ostream& out) const;
 
     virtual ~Instruction();
 

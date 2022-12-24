@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <sstream>
 #include <vector>
 
 #include "InstructionFabric.h"
@@ -18,8 +19,8 @@ class ElfParser {
     ~ElfParser();
 
     void parse();
-    void printDotText(FILE* out);
-    void printSymtab(FILE* out) const;
+    void printDotText(std::ostream& out);
+    void printSymtab(std::ostream& out) const;
 
    private:
     std::ifstream& file;

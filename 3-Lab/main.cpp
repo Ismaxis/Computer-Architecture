@@ -6,8 +6,7 @@
 #include "ElfParser.h"
 #include "InstructionFabric.h"
 
-ElfParser* parseFile(const char* path) {
-    std::ifstream input;
+ElfParser* parseFile(std::ifstream& input, const char* path) {
     input.open(path, std::ios_base::binary);
     if (!input.is_open()) {
         throw std::ios_base::failure("Can`t open input file");
@@ -18,12 +17,11 @@ ElfParser* parseFile(const char* path) {
     return parser;
 };
 
-FILE* openOutFile(const char* path) {
-    FILE* output;
-    if (fopen_s(&output, path, "w")) {
+void openOutFile(std::ofstream& output, const char* path) {
+    output.open(path, std::ios_base::binary);
+    if (!output.is_open()) {
         throw std::ios_base::failure("Can`t open output file");
     }
-    return output;
 }
 
 int main(const int argc, char const* argv[]) {
@@ -32,27 +30,24 @@ int main(const int argc, char const* argv[]) {
         return 0;
     }
 
-    ElfParser* parser = nullptr;
     try {
-        parser = parseFile(argv[1]);
-        FILE* output = nullptr;
+        std::ifstream input;
+        ElfParser* parser = parseFile(input, argv[1]);
         try {
-            output = openOutFile(argv[2]);
+            std::ofstream output;
+            openOutFile(output, argv[2]);
             parser->printDotText(output);
-            fprintf(output, "\n");
+            output << "\n";
             parser->printSymtab(output);
         } catch (const std::ios_base::failure& e) {
             std::cout << e.what() << std::endl;
         }
-        if (output != nullptr) {
-            fclose(output);
-        }
+        delete parser;
     } catch (std::ios_base::failure& e) {
         std::cout << e.what() << std::endl;
     } catch (std::runtime_error& e) {
         std::cout << e.what() << std::endl;
     }
 
-    delete parser;
     return 0;
 }
