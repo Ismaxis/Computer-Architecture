@@ -62,7 +62,6 @@ void ElfParser::parse() {
     // SYMBOL TABLE
     symTableEntries = new SymTabEntry[symTabEntriesCount];
     std::stringstream bufferStream;
-    // bufferStream.rdbuf()->pubsetbuf(buff + symTabAddress - bufferOffset, bufferSize - (symTabAddress - bufferOffset));
     bufferStream.write(buff + symTabAddress - bufferOffset, bufferSize - (symTabAddress - bufferOffset));
     bufferStream.seekg(0);
     for (int i = 0; i < symTabEntriesCount; i++) {

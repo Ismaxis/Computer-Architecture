@@ -2,7 +2,7 @@
     "cmake.debugConfig": {
         "args": [
             ".\\resources\\out.elf",
-            ".\\resources\\out.exept"
+            ".\\resources\\out.validate"
         ]
     },
     "files.associations": {
