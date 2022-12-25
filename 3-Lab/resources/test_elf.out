@@ -1,0 +1,72 @@
+.text
+00010074   <main>:
+   10074:	ff010113	addi	sp, sp, -16
+   10078:	00112623	sw	ra, 12(sp)
+   1007c:	030000ef	jal	ra, 000100ac <mmul>
+   10080:	00c12083	lw	ra, 12(sp)
+   10084:	00000513	addi	a0, zero, 0
+   10088:	01010113	addi	sp, sp, 16
+   1008c:	00008067	jalr	zero, 0(ra)
+   10090:	00000013	addi	zero, zero, 0
+   10094:	00100137	lui	sp, 0x00100
+   10098:	fddff0ef	jal	ra, 00010074 <main>
+   1009c:	00050593	addi	a1, a0, 0
+   100a0:	00a00893	addi	a7, zero, 10
+   100a4:	0ff0000f	unknown_instruction
+   100a8:	00000073	ecall		
+000100ac   <mmul>:
+   100ac:	00011f37	lui	t5, 0x00011
+   100b0:	124f0513	addi	a0, t5, 292
+   100b4:	65450513	addi	a0, a0, 1620
+   100b8:	124f0f13	addi	t5, t5, 292
+   100bc:	e4018293	addi	t0, gp, -448
+   100c0:	fd018f93	addi	t6, gp, -48
+   100c4:	02800e93	addi	t4, zero, 40
+000100c8   <L2>:
+   100c8:	fec50e13	addi	t3, a0, -20
+   100cc:	000f0313	addi	t1, t5, 0
+   100d0:	000f8893	addi	a7, t6, 0
+   100d4:	00000813	addi	a6, zero, 0
+000100d8   <L1>:
+   100d8:	00088693	addi	a3, a7, 0
+   100dc:	000e0793	addi	a5, t3, 0
+   100e0:	00000613	addi	a2, zero, 0
+000100e4   <L0>:
+   100e4:	00078703	lb	a4, 0(a5)
+   100e8:	00069583	lh	a1, 0(a3)
+   100ec:	00178793	addi	a5, a5, 1
+   100f0:	02868693	addi	a3, a3, 40
+   100f4:	02b70733	mul	a4, a4, a1
+   100f8:	00e60633	add	a2, a2, a4
+   100fc:	fea794e3	bne	a5, a0, 000100e4 <L0>
+   10100:	00c32023	sw	a2, 0(t1)
+   10104:	00280813	addi	a6, a6, 2
+   10108:	00430313	addi	t1, t1, 4
+   1010c:	00288893	addi	a7, a7, 2
+   10110:	fdd814e3	bne	a6, t4, 000100d8 <L1>
+   10114:	050f0f13	addi	t5, t5, 80
+   10118:	01478513	addi	a0, a5, 20
+   1011c:	fa5f16e3	bne	t5, t0, 000100c8 <L2>
+   10120:	00008067	jalr	zero, 0(ra)
+
+.symtab
+Symbol Value          	  Size Type 	 Bind 	 Vis   	  Index Name
+[   0] 0x0                   0 NOTYPE   LOCAL    DEFAULT   UNDEF 
+[   1] 0x10074               0 SECTION  LOCAL    DEFAULT       1 .text
+[   2] 0x11124               0 SECTION  LOCAL    DEFAULT       2 .bss
+[   3] 0x0                   0 SECTION  LOCAL    DEFAULT       3 .comment
+[   4] 0x0                   0 SECTION  LOCAL    DEFAULT       4 .riscv.attributes
+[   5] 0x0                   0 FILE     LOCAL    DEFAULT     ABS test.c
+[   6] 0x11924               0 NOTYPE   GLOBAL   DEFAULT     ABS __global_pointer$
+[   7] 0x118F4             800 OBJECT   GLOBAL   DEFAULT       2 b
+[   8] 0x11124               0 NOTYPE   GLOBAL   DEFAULT       1 __SDATA_BEGIN__
+[   9] 0x100AC             120 FUNC     GLOBAL   DEFAULT       1 mmul
+[  10] 0x0                   0 NOTYPE   GLOBAL   DEFAULT   UNDEF _start
+[  11] 0x11124            1600 OBJECT   GLOBAL   DEFAULT       2 c
+[  12] 0x11C14               0 NOTYPE   GLOBAL   DEFAULT       2 __BSS_END__
+[  13] 0x11124               0 NOTYPE   GLOBAL   DEFAULT       2 __bss_start
+[  14] 0x10074              28 FUNC     GLOBAL   DEFAULT       1 main
+[  15] 0x11124               0 NOTYPE   GLOBAL   DEFAULT       1 __DATA_BEGIN__
+[  16] 0x11124               0 NOTYPE   GLOBAL   DEFAULT       1 _edata
+[  17] 0x11C14               0 NOTYPE   GLOBAL   DEFAULT       2 _end
+[  18] 0x11764             400 OBJECT   GLOBAL   DEFAULT       2 a

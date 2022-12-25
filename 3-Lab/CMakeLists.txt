@@ -3,7 +3,7 @@
 project ("RiscV-Disassembler")
 
 set(executableName "rv3")
-set (CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17)
 
 file (GLOB h
 	"${CMAKE_CURRENT_SOURCE_DIR}/*.h"

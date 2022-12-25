@@ -1,0 +1,206 @@
+
+AbstractStruct.h
+#pragma once
+
+#include "typedef.h"
+
+class AbstractStruct {
+   protected:
+    template <typename T>
+    static void read(T& place, const int bytes, std::istream& f) {
+        f.read((char*)(&place), bytes);
+    }
+
+   public:
+    virtual ~AbstractStruct() = default;
+    virtual void fill(std::istream& f) = 0;
+};
+
+ElfHeader.h
+#pragma once
+
+#include "AbstractStruct.h"
+
+class ElfHeader : AbstractStruct {
+   public:
+    static const int EI_NIDENT = 16;
+
+    unsigned char name[EI_NIDENT];
+    Elf32_Half type;
+    Elf32_Half machine;
+    Elf32_Word version;
+    Elf32_Addr entry;
+    Elf32_Off phoff;
+    Elf32_Off shoff;
+    Elf32_Word flags;
+    Elf32_Half ehsize;
+    Elf32_Half phentsize;
+    Elf32_Half phnum;
+    Elf32_Half shentsize;
+    Elf32_Half shnum;
+    Elf32_Half shstrndx;
+
+    void fill(std::istream& f) override {
+        read(name, EI_NIDENT, f);
+        validateName();
+        read(type, sizeof(type), f);
+        read(machine, sizeof(machine), f);
+        validateMachine();
+        read(version, sizeof(version), f);
+        validateVersion();
+        read(entry, sizeof(entry), f);
+        read(phoff, sizeof(phoff), f);
+        read(shoff, sizeof(shoff), f);
+        read(flags, sizeof(flags), f);
+        read(ehsize, sizeof(ehsize), f);
+        read(phentsize, sizeof(phentsize), f);
+        read(phnum, sizeof(phnum), f);
+        read(shentsize, sizeof(shentsize), f);
+        read(shnum, sizeof(shnum), f);
+        read(shstrndx, sizeof(shstrndx), f);
+        validateShstrndx();
+    }
+
+    void validateName() {
+        // ID
+        const char id[] = {0x7f, 'E', 'L', 'F'};
+        for (int i = 0; i < 4; i++) {
+            if (name[i] != id[i]) {
+                throw std::runtime_error("Invalid file identification");
+            }
+        }
+        // CLASS
+        if (name[4] != 1) {
+            const std::string classStr = (name[4] == 2) ? "64-bit" : "Invalid class";
+            throw std::runtime_error("Invalid class. Expected: 32-bit, Found: " + classStr);
+        }
+        // DATA ENCODING
+        if (name[5] != 1) {
+            const std::string encodingStr = (name[5] == 2) ? "ELFDATA2MSB (most significant)" : "Invalid data encoding";
+            throw std::runtime_error("Invalid data encoding. Expected: ELFDATA2LSB (least significant), Found: " + encodingStr);
+        }
+        // VERSION
+        if (name[6] != 1) {
+            throw std::runtime_error("Invalid version. Expected: Current version, Found: Invalid version");
+        }
+    }
+    void validateMachine() {
+        if (machine != 243) {
+            throw std::runtime_error("Invalid class. Expected: RISC-V");
+        }
+    }
+    void validateVersion() {
+        if (version != 1) {
+            throw std::runtime_error("Invalid version. Expected: Current version");
+        }
+    }
+    void validateShstrndx() {
+        if (shstrndx >= shnum) {
+            throw std::runtime_error("Invalid shstrndx. In should be less than shnum");
+        }
+    }
+};
+
+ProgrammHeader.h
+#pragma once
+
+#include "AbstractStruct.h"
+
+class ProgrammHeader : AbstractStruct {
+   public:
+    Elf32_Word type{};
+    Elf32_Off offset{};
+    Elf32_Addr vaddr{};
+    Elf32_Addr paddr{};
+    Elf32_Word filesz{};
+    Elf32_Word memsz{};
+    Elf32_Word flags{};
+    Elf32_Word align{};
+
+    void fill(std::istream& f) override {
+        read(type, sizeof(type), f);
+        read(offset, sizeof(offset), f);
+        read(vaddr, sizeof(vaddr), f);
+        read(paddr, sizeof(paddr), f);
+        read(filesz, sizeof(filesz), f);
+        read(memsz, sizeof(memsz), f);
+        read(flags, sizeof(flags), f);
+        read(align, sizeof(align), f);
+    }
+};
+
+SectionHeader.h
+#pragma once
+
+#include "AbstractStruct.h"
+
+class SectionHeader : AbstractStruct {
+   public:
+    Elf32_Word name;
+    Elf32_Word type;
+    Elf32_Word flags;
+    Elf32_Addr addr;
+    Elf32_Off offset;
+    Elf32_Word size;
+    Elf32_Word link;
+    Elf32_Word info;
+    Elf32_Word addralign;
+    Elf32_Word entsize;
+
+    void fill(std::istream& f) override {
+        read(name, sizeof(name), f);
+        read(type, sizeof(type), f);
+        read(flags, sizeof(flags), f);
+        read(addr, sizeof(addr), f);
+        read(offset, sizeof(offset), f);
+        read(size, sizeof(size), f);
+        read(link, sizeof(link), f);
+        read(info, sizeof(info), f);
+        read(addralign, sizeof(addralign), f);
+        read(entsize, sizeof(entsize), f);
+    }
+
+    static void validateTextSize(uint32_t size) {
+        if (size % 4 != 0) {
+            throw std::runtime_error("Invalid .text size: " + std::to_string(size));
+        }
+    }
+};
+
+SymTabEntry.h
+#pragma once
+
+#include "AbstractStruct.h"
+
+class SymTabEntry : AbstractStruct {
+   public:
+    Elf32_Word name;
+    Elf32_Addr value;
+    Elf32_Word size;
+    unsigned char info;
+    unsigned char other;
+    Elf32_Half shndx;
+
+    void fill(std::istream& f) override {
+        read(name, sizeof(name), f);
+        read(value, sizeof(value), f);
+        read(size, sizeof(size), f);
+        read(info, sizeof(info), f);
+        read(other, sizeof(other), f);
+        read(shndx, sizeof(shndx), f);
+    }
+};
+
+typedef.h
+#include <iostream>
+
+typedef uint16_t Elf32_Half;
+typedef int16_t Elf32_SHalf;
+typedef uint32_t Elf32_Word;
+typedef int32_t Elf32_Sword;
+typedef uint64_t Elf32_Xword;
+typedef int64_t Elf32_Sxword;
+
+typedef uint32_t Elf32_Off;
+typedef uint32_t Elf32_Addr;
+typedef uint16_t Elf32_Section;

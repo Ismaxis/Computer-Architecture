@@ -1,0 +1,671 @@
+
+ElfParser.cpp
+#include "ElfParser.h"
+
+ElfParser::ElfParser(std::ifstream& f) : file(f) {}
+
+void ElfParser::parse() {
+    // ELF HEADER
+    elfHeader.fill(file);
+
+    // PROGREMM HEADERS
+    programHeaders = new ProgrammHeader[elfHeader.phnum];
+    for (int i = 0; i < elfHeader.phnum; i++) {
+        programHeaders[i].fill(file);
+    }
+
+    // SECTION HEADERS
+    bufferOffset = elfHeader.phoff + elfHeader.phnum * elfHeader.phentsize;
+    const int bufferSize = elfHeader.shoff - bufferOffset;
+
+    const auto buff = new char[bufferSize];
+    for (int i = 0; i < bufferSize; i++) {
+        file.read(&buff[i], sizeof(char));
+    }
+
+    sectionHeaders = new SectionHeader[elfHeader.shnum];
+    for (int i = 0; i < elfHeader.shnum; i++) {
+        sectionHeaders[i].fill(file);
+        if (sectionHeaders[i].type == STR_TAB) {
+            if (i == elfHeader.shstrndx) {
+                shStrTabAddress = sectionHeaders[i].offset;
+                shStrTabSize = sectionHeaders[i].size;
+            } else {
+                strTabAddress = sectionHeaders[i].offset;
+                strTabSize = sectionHeaders[i].size;
+            }
+        } else if (sectionHeaders[i].type == SYM_TAB) {
+            symTabAddress = sectionHeaders[i].offset;
+            symTabEntrySize = sectionHeaders[i].entsize;
+            symTabEntriesCount = sectionHeaders[i].size / symTabEntrySize;  // by default ent size is 0x10
+        }
+    }
+
+    fillStrTab(buff);
+    fillShStrTab(buff);
+
+    // SYMBOL TABLE
+    symTableEntries = new SymTabEntry[symTabEntriesCount];
+    std::stringstream bufferStream;
+    bufferStream.write(buff + symTabAddress - bufferOffset, bufferSize - (symTabAddress - bufferOffset));
+    bufferStream.seekg(0);
+    for (int i = 0; i < symTabEntriesCount; i++) {
+        symTableEntries[i].fill(bufferStream);
+        if (symTableEntries[i].info % 0b00010000 == STT::FUNC) {
+            labels[symTableEntries[i].value] = getStringFromStrTab(symTableEntries[i].name);
+        }
+    }
+
+    // INSTRUCTIONS
+    for (int i = 1; i < elfHeader.shnum; i++) {
+        if (getStringFromShStrTab(sectionHeaders[i].name) == ".text") {
+            textAddress = sectionHeaders[i].offset;
+            textVirtualAddress = sectionHeaders[i].addr;
+            textSize = sectionHeaders[i].size;
+            SectionHeader::validateTextSize(textSize);
+            break;
+        }
+    }
+
+    int labelsCounter = 0;
+    for (uint32_t curAddress = 0; curAddress < textSize; curAddress += 4) {
+        Instruction* newInstr = InstructionFabric::createInstruction(*reinterpret_cast<uint32_t*>(&buff[curAddress]));
+        newInstr->setAddress(textVirtualAddress + curAddress);
+        if (newInstr->needLabel()) {
+            uint32_t address = newInstr->getImmAddr();
+            if (labels.count(address) <= 0) {
+                labels[address] = "L" + std::to_string(labelsCounter++);
+            }
+        }
+        instructions.push_back(newInstr);
+    }
+
+    for (auto& inst : instructions) {
+        if (inst->needLabel()) {
+            uint32_t address = inst->getImmAddr();
+            inst->setLabel(labels[address]);
+        }
+    }
+
+    delete[] buff;
+}
+
+void ElfParser::printDotText(std::ostream& out) {
+    out << ".text\n";
+    int curAddress = textVirtualAddress;
+    for (int i = 0; i < instructions.size(); i++, curAddress += 4) {
+        if (labels.count(curAddress) > 0) {
+            constexpr int buffSize = 128;
+            char buff[buffSize];
+            snprintf(buff, buffSize, "%08x   <%s>:\n", curAddress, labels[curAddress].c_str());
+            out << buff;
+        }
+        instructions.at(i)->toString(out);
+    }
+}
+
+void ElfParser::printSymtab(std::ostream& out) const {
+    out << ".symtab\n"
+        << "Symbol Value          	  Size Type 	 Bind 	 Vis   	  Index Name\n";
+    for (int i = 0; i < symTabEntriesCount; i++) {
+        SymTabEntry curEntry = symTableEntries[i];
+
+        std::string name;
+        if (curEntry.info % 0b00010000 == STT::SECTION) {
+            name = getStringFromShStrTab(sectionHeaders[curEntry.shndx].name);
+        } else {
+            name = getStringFromStrTab(curEntry.name);
+        }
+
+        constexpr int buffSize = 128;
+        char buff[buffSize];
+        snprintf(buff, buffSize, "[%4i] 0x%-15X %5i %-8s %-8s %-8s %6s %s", i, curEntry.value, curEntry.size,
+                 toStringSTT(static_cast<STT>(curEntry.info % 0b10000)).c_str(),
+                 toStringSTB(static_cast<STB>(curEntry.info >> 4)).c_str(),
+                 toStringSTV(static_cast<STV>(curEntry.other)).c_str(),
+                 toStringSHN(static_cast<SHN>(curEntry.shndx)).c_str(),
+                 name.c_str());
+        out << buff << "\n";
+    }
+}
+
+void ElfParser::fillStrTab(const char* buff) {
+    strTab = new char[strTabSize];
+    for (int j = 0; j < strTabSize; j++) {
+        strTab[j] = buff[strTabAddress + j - bufferOffset];
+    }
+}
+
+void ElfParser::fillShStrTab(const char* buff) {
+    shStrTab = new char[shStrTabSize];
+    for (int j = 0; j < shStrTabSize; j++) {
+        shStrTab[j] = buff[shStrTabAddress + j - bufferOffset];
+    }
+}
+
+std::string ElfParser::getStringFromStrTab(const uint32_t offset) const {
+    if (offset > strTabSize) {
+        throw std::runtime_error("strTab index '" + std::to_string(offset) + "' is out of bound for size '" + std::to_string(strTabSize) + "'");
+    }
+
+    std::stringstream ss;
+    int charsRead = 0;
+    while (strTab[offset + charsRead] != '\0') {
+        ss << strTab[offset + charsRead];
+        ++charsRead;
+    }
+
+    return ss.str();
+}
+
+std::string ElfParser::getStringFromShStrTab(const uint32_t offset) const {
+    if (offset > shStrTabSize) {
+        throw std::runtime_error("shStrTab index '" + std::to_string(offset) + "' is out of bound for size '" + std::to_string(shStrTabSize) + "'");
+    }
+
+    std::stringstream ss;
+    int charsRead = 0;
+    while (shStrTab[offset + charsRead] != '\0') {
+        ss << shStrTab[offset + charsRead];
+        ++charsRead;
+    }
+
+    return ss.str();
+}
+
+ElfParser::~ElfParser() {
+    for (const auto& instruction : instructions) {
+        delete instruction;
+    }
+    delete[] programHeaders;
+    delete[] sectionHeaders;
+    delete[] symTableEntries;
+    delete[] strTab;
+    delete[] shStrTab;
+}
+
+ElfParser.h
+#pragma once
+
+#include <ElfHeader.h>
+#include <InstructionFabric.h>
+#include <ProgrammHeader.h>
+#include <SectionHeader.h>
+#include <SymTabEntry.h>
+#include <SymTabInfoEnum.h>
+
+#include <fstream>
+#include <sstream>
+#include <vector>
+class ElfParser {
+    static constexpr uint8_t SYM_TAB = 2;
+    static constexpr uint8_t STR_TAB = 3;
+
+   public:
+    explicit ElfParser(std::ifstream& f);
+    ~ElfParser();
+
+    void parse();
+    void printDotText(std::ostream& out);
+    void printSymtab(std::ostream& out) const;
+
+   private:
+    std::ifstream& file;
+
+    ElfHeader elfHeader;
+    ProgrammHeader* programHeaders;
+
+    int bufferOffset;  // offset of address in buff relative to file
+    SectionHeader* sectionHeaders;
+
+    // SYM_TAB
+    uint32_t symTabAddress;
+    uint32_t symTabEntrySize;
+    uint32_t symTabEntriesCount;
+    SymTabEntry* symTableEntries;
+    // STR_TAB
+    uint32_t strTabAddress;
+    uint32_t strTabSize;
+    void fillStrTab(const char* buff);
+    char* strTab;
+    // SH_STR_TAB
+    uint32_t shStrTabAddress;
+    uint32_t shStrTabSize;
+    void fillShStrTab(const char* buff);
+    char* shStrTab;
+
+    std::string getStringFromStrTab(uint32_t offset) const;
+    std::string getStringFromShStrTab(uint32_t offset) const;
+
+    // .text
+    uint32_t textAddress;
+    uint32_t textVirtualAddress;
+    uint32_t textSize;
+
+    std::vector<Instruction*> instructions;
+    std::unordered_map<uint32_t, std::string> labels;
+    // std::unordered_map<uint32_t, int> addressLabels;
+};
+
+
+Instruction.cpp
+#include <Instruction.h>
+
+Instruction::Instruction(const uint32_t bits) : bits(bits){};
+
+std::string Instruction::addressString() const {
+    return toHexString(address);
+}
+
+void Instruction::toString(std::ostream& out) const {
+    std::string instrStr = instructionString();
+    if (label.size() > 0) {
+        instrStr += " <" + label + ">";
+    }
+    constexpr int buffSize = 128;
+    char buff[buffSize];
+    snprintf(buff, buffSize, "   %05x:\t%08x\t%7s\n", address, bits, instrStr.c_str());
+    out << buff;
+}
+
+Instruction::~Instruction() = default;
+
+void Instruction::setAddress(const uint32_t givenAddress) {
+    address = givenAddress;
+}
+
+void Instruction::setLabel(const std::string givenLabel) {
+    label = givenLabel;
+}
+
+uint8_t Instruction::parseOpcodeBits(uint32_t bits) {
+    uint16_t opcode = 0;
+    for (size_t i = 0; i < 7; i++) {
+        opcode += bits & (1 << i);
+    }
+
+    return opcode;
+}
+
+uint8_t Instruction::parseFunct3(const uint32_t bits) {
+    uint8_t funct3 = 0;
+
+    for (size_t i = 0; i < 3; i++) {
+        funct3 += isBitSet(bits, i + 12) > 0 ? (1 << i) : 0;
+    }
+
+    return funct3;
+}
+
+uint8_t Instruction::parseFunct7(const uint32_t bits) {
+    uint8_t funct7 = 0;
+
+    for (int i = 0; i < 7; i++) {
+        funct7 += isBitSet(bits, i + 25) > 0 ? (1 << i) : 0;
+    }
+
+    return funct7;
+}
+
+uint8_t Instruction::parseRegIndex(const uint32_t bits, const int startAddress) {
+    uint8_t index = 0;
+    for (int i = 0; i < 5; i++) {
+        index += isBitSet(bits, i + startAddress) > 0 ? (1 << i) : 0;
+    }
+    return index;
+}
+
+std::string Instruction::parseRd(const uint32_t bits) {
+    return Storage::getRegisterName(parseRegIndex(bits, 7));
+}
+
+std::string Instruction::parseRs1(const uint32_t bits) {
+    return Storage::getRegisterName(parseRegIndex(bits, 15));
+}
+
+std::string Instruction::parseRs2(const uint32_t bits) {
+    return Storage::getRegisterName(parseRegIndex(bits, 20));
+}
+
+bool Instruction::isBitSet(const uint32_t bits, const int index) {
+    return (bits & (1 << index)) > 0;
+}
+
+
+Instruction.h
+#pragma once
+#include <Storage.h>
+
+#include <fstream>
+#include <iomanip>
+
+class Instruction {
+   protected:
+    uint32_t bits;
+    uint32_t address{};
+    std::string label{};
+
+    explicit Instruction(uint32_t bits);
+
+    std::string addressString() const;
+
+    virtual std::string instructionString() const = 0;
+
+   public:
+    virtual void toString(std::ostream& out) const;
+
+    virtual ~Instruction();
+
+    void setAddress(uint32_t givenAddress);
+    void setLabel(std::string givenLabel);
+    virtual bool needLabel() const {
+        return false;
+    }
+    virtual uint32_t getImmAddr() const {
+        return 0;
+    }
+
+    static uint8_t parseOpcodeBits(uint32_t bits);
+
+    static uint8_t parseFunct3(uint32_t bits);
+
+    static uint8_t parseFunct7(uint32_t bits);
+
+    static uint8_t parseRegIndex(uint32_t bits, int startAddress);
+
+    static std::string parseRd(uint32_t bits);
+
+    static std::string parseRs1(uint32_t bits);
+
+    static std::string parseRs2(uint32_t bits);
+
+    static bool isBitSet(uint32_t bits, int index);
+
+    template <typename T>
+    static std::string toHexString(T number);
+};
+
+template <typename T>
+std::string Instruction::toHexString(T number) {
+    std::ostringstream ss;
+    ss << std::setfill('0') << std::setw(sizeof(T) * 2) << std::hex << number;
+    return ss.str();
+}
+
+
+InstructionFabric.h
+#pragma once
+
+#include <BType.h>
+#include <EType.h>
+#include <IAddrType.h>
+#include <IType.h>
+#include <JType.h>
+#include <RType.h>
+#include <SType.h>
+#include <UType.h>
+#include <UnknownType.h>
+
+class InstructionFabric {
+   public:
+    static Instruction* createInstruction(const uint32_t bits) {
+        const Type type = Storage::getType(
+            Instruction::parseOpcodeBits(bits));
+        if (type == Type::R) {
+            return new RType(bits);
+        } else if (type == Type::I) {
+            return new IType(bits);
+        } else if (type == Type::IAddr) {
+            return new IAddrType(bits);
+        } else if (type == Type::S) {
+            return new SType(bits);
+        } else if (type == Type::B) {
+            return new BType(bits);
+        } else if (type == Type::U) {
+            return new UType(bits);
+        } else if (type == Type::J) {
+            return new JType(bits);
+        } else if (type == Type::E) {
+            return new EType(bits);
+        } else {
+            return new UnknownType(bits);
+        }
+    }
+};
+
+main.cpp
+#include <ElfParser.h>
+#include <InstructionFabric.h>
+
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <vector>
+
+ElfParser* parseFile(std::ifstream& input, const char* path) {
+    input.open(path, std::ios_base::binary);
+    if (!input.is_open()) {
+        throw std::ios_base::failure("Can`t open input file");
+    }
+
+    const auto parser = new ElfParser(input);
+    parser->parse();
+    return parser;
+};
+
+void openOutFile(std::ofstream& output, const char* path) {
+    output.open(path, std::ios_base::binary);
+    if (!output.is_open()) {
+        throw std::ios_base::failure("Can`t open output file");
+    }
+}
+
+int main(const int argc, char const* argv[]) {
+    if (argc < 3) {
+        std::cout << "2 arguments expected, " + std::to_string(argc - 1) + " found\n";
+        return 0;
+    }
+
+    try {
+        std::ifstream input;
+        ElfParser* parser = parseFile(input, argv[1]);
+        try {
+            std::ofstream output;
+            openOutFile(output, argv[2]);
+            parser->printDotText(output);
+            output << "\n";
+            parser->printSymtab(output);
+        } catch (const std::ios_base::failure& e) {
+            std::cout << e.what() << std::endl;
+        }
+        delete parser;
+    } catch (std::ios_base::failure& e) {
+        std::cout << e.what() << std::endl;
+    } catch (std::runtime_error& e) {
+        std::cout << e.what() << std::endl;
+    }
+
+    return 0;
+}
+
+Storage.cpp
+#include <Storage.h>
+
+std::unordered_map<uint8_t, Type> Storage::typesMap = {
+    {0b0110111, Type::U},
+    {0b0010111, Type::U},
+    {0b1101111, Type::J},
+    {0b1100111, Type::IAddr},
+    {0b0000011, Type::IAddr},
+    {0b1100011, Type::B},
+    {0b0100011, Type::S},
+    {0b0010011, Type::I},
+    {0b0110011, Type::R},
+    {0b1110011, Type::E},
+};
+
+
+Storage.h
+#pragma once
+#include <Type.h>
+
+#include <string>
+#include <unordered_map>
+
+class Storage {
+   private:
+    Storage() = delete;
+
+    static std::unordered_map<uint8_t, Type> typesMap;
+
+   public:
+    static Type getType(const uint8_t opcode) {
+        if (typesMap.count(opcode) > 0) {
+            return typesMap[opcode];
+        } else {
+            return Type::UNKNOWN;
+        }
+    }
+
+    static std::string getRegisterName(const uint8_t index) {
+        if (index == 0) {
+            return "zero";
+        } else if (index == 1) {
+            return "ra";
+        } else if (index == 2) {
+            return "sp";
+        } else if (index == 3) {
+            return "gp";
+        } else if (index == 4) {
+            return "tp";
+        } else if (5 <= index && index <= 7) {
+            return "t" + std::to_string(index - 5);
+        } else if (index == 8) {
+            return "s0";
+        } else if (index == 9) {
+            return "s1";
+        } else if (10 <= index && index <= 17) {
+            return "a" + std::to_string(index - 10);
+        } else if (18 <= index && index <= 27) {
+            return "s" + std::to_string(index - 18 + 2);
+        } else if (28 <= index && index <= 31) {
+            return "t" + std::to_string(index - 28 + 3);
+        } else {
+            return "invalid reg index: " + std::to_string(index);
+        }
+    }
+};
+
+
+SymTabInfoEnum.h
+#pragma once
+#include <string>
+
+enum STT : char {
+    NOTYPE = 0,
+    OBJECT = 1,
+    FUNC = 2,
+    SECTION = 3,
+    FILE_TYPE = 4,
+    COMMON = 5,
+    LOOS = 10,
+    HIOS = 12,
+    LOPROC = 13,
+    HIPROC = 15,
+};
+
+inline std::string toStringSTT(const STT type) {
+    if (type == NOTYPE) {
+        return "NOTYPE";
+    } else if (type == SECTION) {
+        return "SECTION";
+    } else if (type == OBJECT) {
+        return "OBJECT";
+    } else if (type == FUNC) {
+        return "FUNC";
+    } else if (type == FILE_TYPE) {
+        return "FILE";
+    } else {
+        return "STT '" + std::to_string(type) + "'not defined yet";
+    }
+}
+
+enum STB : char {
+    LOCAL = 0,
+    GLOBAL = 1,
+    WEAK = 2,
+};
+
+inline std::string toStringSTB(const STB type) {
+    if (type == LOCAL) {
+        return "LOCAL";
+    } else if (type == GLOBAL) {
+        return "GLOBAL";
+    } else if (type == WEAK) {
+        return "WEAK";
+    } else {
+        return "STB '" + std::to_string(type) + "' not defined yet";
+    }
+}
+
+enum STV : char {
+    DEFAULT = 0,
+    INTERNAL = 1,
+    HIDDEN = 2,
+    PROTECTED = 3,
+};
+
+inline std::string toStringSTV(const STV type) {
+    if (type == DEFAULT) {
+        return "DEFAULT";
+    } else if (type == INTERNAL) {
+        return "INTERNAL";
+    } else if (type == HIDDEN) {
+        return "HIDDEN";
+    } else if (type == PROTECTED) {
+        return "PROTECTED";
+    } else {
+        return "STV '" + std::to_string(type) + "' not defined yet";
+    }
+}
+
+enum SHN : int {
+    UNDEF = 0,
+    LORESERVE = 0xff00,
+    ABS = 0xfff1,
+    SHN_COMMON = 0xfff2,
+    HIRESERVE = 0xffff,
+};
+
+inline std::string toStringSHN(const SHN type) {
+    if (type == UNDEF) {
+        return "UNDEF";
+    } else if (type == LORESERVE) {
+        return "LORESERVE";
+    } else if (type == ABS) {
+        return "ABS";
+    } else if (type == SHN_COMMON) {
+        return "COMMON";
+    } else if (type == HIRESERVE) {
+        return "HIRESERVE";
+    } else if (0xff00 <= type && type <= 0xff1f) {
+        return "SPEC: " + std::to_string(type);
+    } else {
+        return std::to_string(type);
+    }
+}
+
+Type.h
+#pragma once
+
+enum Type : char {
+    R,
+    I,
+    IAddr,
+    S,
+    B,
+    U,
+    J,
+    UNKNOWN,
+    E,
+};

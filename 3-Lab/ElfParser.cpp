@@ -104,7 +104,7 @@ void ElfParser::printDotText(std::ostream& out) {
 
 void ElfParser::printSymtab(std::ostream& out) const {
     out << ".symtab\n"
-        << "Symbol Value          	  Size Type 	 Bind 	 Vis   	  Index Name\n";
+        << "Symbol Value              Size Type 	 Bind 	 Vis   	  Index Name\n";
     for (int i = 0; i < symTabEntriesCount; i++) {
         SymTabEntry curEntry = symTableEntries[i];
 
