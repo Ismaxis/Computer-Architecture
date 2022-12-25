@@ -25,8 +25,18 @@ inline std::string toStringSTT(const STT type) {
         return "FUNC";
     } else if (type == FILE_TYPE) {
         return "FILE";
+    } else if (type == COMMON) {
+        return "COMMON";
+    } else if (type == LOOS) {
+        return "LOOS";
+    } else if (type == HIOS) {
+        return "HIOS";
+    } else if (type == LOPROC) {
+        return "LOPROC";
+    } else if (type == HIPROC) {
+        return "HIPROC";
     } else {
-        return "STT '" + std::to_string(type) + "'not defined yet";
+        return "Unnknown STT '" + std::to_string(type) + "'";
     }
 }
 
@@ -34,6 +44,10 @@ enum STB : char {
     LOCAL = 0,
     GLOBAL = 1,
     WEAK = 2,
+    STB_LOOS = 10,
+    STB_HIOS = 12,
+    STB_LOPROC = 13,
+    STB_HIPROC = 13,
 };
 
 inline std::string toStringSTB(const STB type) {
@@ -43,8 +57,16 @@ inline std::string toStringSTB(const STB type) {
         return "GLOBAL";
     } else if (type == WEAK) {
         return "WEAK";
+    } else if (type == STB_LOOS) {
+        return "LOOS";
+    } else if (type == STB_HIOS) {
+        return "HIOS";
+    } else if (type == STB_LOPROC) {
+        return "LOPROC";
+    } else if (type == STB_HIPROC) {
+        return "HIPROC";
     } else {
-        return "STB '" + std::to_string(type) + "' not defined yet";
+        return "Unnknown STB '" + std::to_string(type) + "'";
     }
 }
 
@@ -65,7 +87,7 @@ inline std::string toStringSTV(const STV type) {
     } else if (type == PROTECTED) {
         return "PROTECTED";
     } else {
-        return "STV '" + std::to_string(type) + "' not defined yet";
+        return "Unnknown STV '" + std::to_string(type) + "'";
     }
 }
 
