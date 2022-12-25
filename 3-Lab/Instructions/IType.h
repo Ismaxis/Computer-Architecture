@@ -8,7 +8,7 @@ class IType : public Instruction {
    public:
     IType(uint32_t bits) : Instruction(bits) {
         uint8_t funct3 = parseFunct3(bits);
-        isShamt = funct3 == 0b001 || funct3 == 0b001 || funct3 == 0b001;
+        isShamt = funct3 == 0b001 || funct3 == 0b101;
     }
     ~IType() = default;
 
@@ -31,7 +31,7 @@ class IType : public Instruction {
     std::string getMnemonic() const {
         uint8_t key = parseFunct3(bits);
         if (isShamt) {
-            key += (parseFunct7(bits) >> 2) % 0b10000;
+            key += isBitSet(parseFunct7(bits), 5) ? 0b1000 : 0;
         }
 
         return mnemonics[key];

@@ -1,7 +1,8 @@
 {
     "cmake.debugConfig": {
         "args": [
-            ".\\resources\\out.elf",
+            // ".\\resources\\out.elf",
+            "C:\\Users\\Ismaxis\\Downloads\\test.elf",
             ".\\resources\\out.s"
         ]
     },

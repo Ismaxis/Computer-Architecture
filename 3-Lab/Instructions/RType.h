@@ -14,7 +14,7 @@ class RType : public Instruction {
 
    private:
     std::string getMnemonic() const {
-        uint16_t key = parseFunct7(bits) << (3 + parseFunct3(bits));
+        uint16_t key = (parseFunct7(bits) << 3) + parseFunct3(bits);
         return mnemonics[key];
     }
 };

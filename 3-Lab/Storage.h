@@ -36,10 +36,10 @@ class Storage {
             return "s0";
         } else if (index == 9) {
             return "s1";
-        } else if (10 <= index && index <= 27) {
+        } else if (10 <= index && index <= 17) {
             return "a" + std::to_string(index - 10);
-        } else if (15 <= index && index <= 27) {
-            return "s" + std::to_string(index - 15 + 2);
+        } else if (18 <= index && index <= 27) {
+            return "s" + std::to_string(index - 18 + 2);
         } else if (28 <= index && index <= 31) {
             return "t" + std::to_string(index - 28 + 3);
         } else {
