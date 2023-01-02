@@ -11,10 +11,10 @@ private:
     std::vector<std::vector<int>> storage;
 public:
 
-    int getX() const {
+    int getXSize() const {
         return sizeX;
     }
-    int getY() const {
+    int getYSize() const {
         return sizeY;
     }
 

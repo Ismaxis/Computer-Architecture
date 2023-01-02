@@ -1,43 +1,86 @@
 #include <omp.h>
 
-#include <fstream>
 #include <iostream>
 
 #include "PnmImage.h"
 
-void openInFile(std::ifstream& input, const char* path)
-{
-    input.open(path, std::ios_base::binary);
-    if (!input.is_open()) 
-    {
-        throw std::ios_base::failure("Can`t open input file");
-    }
-};
+constexpr int INTENSITY_LAYER_NUMBER = 256;
 
-void openOutFile(std::ofstream& output, const char* path)
-{
-    output.open(path, std::ios_base::binary);
-    if (!output.is_open()) 
+void calculateHist(const PnmImage& image, int *hist) {
+    for (int x = 0; x < image.getXSize(); ++x)
     {
-        throw std::ios_base::failure("Can`t open output file");
+        for (int y = 0; y < image.getYSize(); ++y)
+        {
+            ++hist[image.getPixel(x,y)];
+        }
     }
 }
 
+int calculateIntensitySum(const PnmImage& image) {
+    int sum = 0;
+    for (int x = 0; x < image.getXSize(); ++x)
+    {
+        for (int y = 0; y < image.getYSize(); ++y)
+        {
+            sum += image.getPixel(x,y);
+        }
+    }
 
+    return sum;
+}
+
+int otsuThreshold(const PnmImage& image) {
+    int* hist = new int[INTENSITY_LAYER_NUMBER];
+    calculateHist(image, hist);
+
+    int all_pixel_count = image.getXSize() * image.getYSize();
+    int all_intensity_sum = calculateIntensitySum(image);
+
+    int best_thresh = 0;
+    double best_sigma = 0.0;
+
+    int first_class_pixel_count = 0;
+    int first_class_intensity_sum = 0;
+
+    // Перебираем границу между классами
+    // thresh < INTENSITY_LAYER_NUMBER - 1, т.к. при 255 в ноль уходит знаменатель внутри for
+    for (int thresh = 0; thresh < INTENSITY_LAYER_NUMBER - 1; ++thresh) {
+        first_class_pixel_count += hist[thresh];
+        first_class_intensity_sum += thresh * hist[thresh];
+
+        double first_class_prob = first_class_pixel_count / (double)all_pixel_count;
+        double second_class_prob = 1.0 - first_class_prob;
+
+        double first_class_mean = first_class_intensity_sum / (double)first_class_pixel_count;
+        double second_class_mean = (all_intensity_sum - first_class_intensity_sum) / (double)(all_pixel_count - first_class_pixel_count);
+
+        double mean_delta = first_class_mean - second_class_mean;
+
+        double sigma = first_class_prob * second_class_prob * mean_delta * mean_delta;
+
+        if (sigma > best_sigma) {
+            best_sigma = sigma;
+            best_thresh = thresh;
+        }
+    }
+
+    return best_thresh;
+}
 
 int main(const int argc, char const* argv[])
 {
     const std::string path = argc > 2 ? argv[2] : "images/image1.pnm";
-    const int threshold = 1;
     try 
     {
         PnmImage image;
 
         image.loadFromFile(path);
 
-        for (int x = 0; x < image.getX(); ++x)
+        const int threshold = otsuThreshold(image);
+
+        for (int x = 0; x < image.getXSize(); ++x)
         {
-            for (int y = 0; y < image.getY(); ++y)
+            for (int y = 0; y < image.getYSize(); ++y)
             {
                 image.setPixel(image.getPixel(x,y) > threshold ? 255 : 0, x, y);
             }
