@@ -1,31 +1,11 @@
 import pygame as pg
 
+import pnmFuncs
 
-class PnmImage:
-    def __init__(self, x, y) -> None:
-        self.x = x
-        self.y = y
-        self.storage = []
+PIXEL_SIZE = 1
 
-
-def imageFromFile(path: str) -> PnmImage:
-    with open(path, "rb") as file:
-        file.readline()
-        sizes = file.readline().split()
-        image = PnmImage(int(sizes[0]), int(sizes[1]))
-        file.readline()
-        for i in range(image.y):
-            line = file.readline().split()
-            image.storage.append([])
-            for j in range(image.x):
-                image.storage[i].append(int(line[j]))
-        return image
-
-
-PIXEL_SIZE = 20
-
-imageA = imageFromFile("../images/image1.pnm")
-imageB = imageFromFile("../images/image1_bin.pnm")
+imageA = pnmFuncs.imageFromBinaryFile("../images/drop.pnm")
+imageB = pnmFuncs.imageFromBinaryFile("../images/drop_bin.pnm")
 
 WIN_SIZE = (imageA.x*PIXEL_SIZE, (imageA.y + imageB.y)*PIXEL_SIZE)
 win = pg.display.set_mode(WIN_SIZE)

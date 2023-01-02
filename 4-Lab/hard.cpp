@@ -69,7 +69,7 @@ int otsuThreshold(const PnmImage& image) {
 
 int main(const int argc, char const* argv[])
 {
-    const std::string path = argc > 2 ? argv[2] : "images/image1.pnm";
+    const std::string path = argc > 2 ? argv[2] : "images/drop.pnm";
     try 
     {
         PnmImage image;
@@ -77,16 +77,18 @@ int main(const int argc, char const* argv[])
         image.loadFromFile(path);
 
         const int threshold = otsuThreshold(image);
+        //const int threshold = 100;
 
         for (int x = 0; x < image.getXSize(); ++x)
         {
             for (int y = 0; y < image.getYSize(); ++y)
             {
-                image.setPixel(image.getPixel(x,y) > threshold ? 255 : 0, x, y);
+                unsigned int pixel = image.getPixel(x,y);
+                image.setPixel(pixel > threshold ? (char)255 : 0, x, y);
             }
         }
 
-        image.saveToFile("images/image1_bin.pnm");
+        image.saveToFile("images/drop_bin.pnm");
     }
     catch (std::ios_base::failure& e) 
     {
