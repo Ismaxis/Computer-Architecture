@@ -6,26 +6,38 @@
 
 constexpr int INTENSITY_LAYER_NUMBER = 256;
 
-double* calculatePrefOmegas(const PnmImage& image)
+double* calculateProbabilities(const PnmImage& image)
 {
-    auto* omega = new double[INTENSITY_LAYER_NUMBER];
-    memset(omega, 0.0, INTENSITY_LAYER_NUMBER * sizeof(double));
+    // Count
+    auto* probability = new double[INTENSITY_LAYER_NUMBER];
+    memset(probability, 0.0, INTENSITY_LAYER_NUMBER * sizeof(double));
     for (int x = 0; x < image.getXSize(); ++x)
     {
         for (int y = 0; y < image.getYSize(); ++y)
         {
-            ++omega[image.getPixel(x, y)];
+            ++probability[image.getPixel(x, y)];
         }
     }
-    for (int i = 1; i < INTENSITY_LAYER_NUMBER; ++i)
-    {
-        omega[i] += omega[i - 1];
-    }
 
+    // Probability
     const int totalPixelCount = image.getXSize() * image.getYSize();
     for (int i = 0; i < INTENSITY_LAYER_NUMBER; ++i)
     {
-        omega[i] /= totalPixelCount;
+        probability[i] /= totalPixelCount;
+    }
+
+    return probability;
+}
+
+double* calculatePrefOmegas(const double* probability)
+{
+    auto* omega = new double[INTENSITY_LAYER_NUMBER];
+    omega[0] = probability[0];
+    // Pref sum
+    for (int i = 1; i < INTENSITY_LAYER_NUMBER; ++i)
+    {
+        omega[i] = omega[i - 1] + probability[i];
+        //std::cout << "omega " << i << " " << omega[i] << '\n';
     }
 
     return omega;
@@ -45,13 +57,15 @@ int calculateMuTotal(const PnmImage& image)
     return sum;
 }
 
-double* calculatePrefMus(const double* omega)
+double* calculatePrefMus(const double* probabilities)
 {
     auto* mu = new double[INTENSITY_LAYER_NUMBER];
     mu[0] = 0;
     for (int i = 1; i < INTENSITY_LAYER_NUMBER; ++i)
     {
-        mu[i] = mu[i - 1] + i * omega[i];
+        mu[i] = mu[i - 1] + i * probabilities[i];
+
+        //std::cout << "mu " << i << " " << mu[i] << '\n';
     }
 
     return mu;
@@ -101,33 +115,35 @@ bool incThresholds(std::vector<int>& thresholds)
 double getOmegaRange(const double* omega, const std::vector<int>& thresholds, const int i)
 {
     const double left = i > 0 ? omega[thresholds[i - 1]] : 0.0;
-    const double right = i < thresholds.size() ? omega[thresholds[i]] : 1.0;
+    const double right = i < thresholds.size() ? omega[thresholds[i] - 1] : 1.0;
     return right - left;
 }
 
-double getMuRange(const double* mu, const double* omega, const std::vector<int>& thresholds, const int i)
+double getMuRange(const double* mu, const std::vector<int>& thresholds, const int i)
 {
     const double left = i > 0 ? mu[thresholds[i - 1]] : 0.0;
     if (i < thresholds.size())
     {
-        const double right = mu[thresholds[i]];
-        const double divisor = omega[thresholds[i]];
-        return (right - left) / divisor;
+        const double right = mu[thresholds[i] - 1];
+        return right - left;
     }
-    const double right = mu[INTENSITY_LAYER_NUMBER - 1];
-    return (right - left);
+    const double right = mu[INTENSITY_LAYER_NUMBER - 1]; 
+    return right - left;
 }
 
 std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
 {
-    // Omega's calculations
-    const auto* omega = calculatePrefOmegas(image);
+    // Probabilities calculations
+    const auto* probability = calculateProbabilities(image);
 
-    // MuTotal calculations
-    const double muT = calculateMuTotal(image);
+    // Omega's calculations
+    const auto* omega = calculatePrefOmegas(probability);
 
     // Mu's calculations
-    const auto* mu = calculatePrefMus(omega);
+    const auto* mu = calculatePrefMus(probability);
+
+    // MuTotal calculations
+    const double muT = mu[INTENSITY_LAYER_NUMBER - 1];
 
     // Filling initial thresholds
     std::vector<int> curThresholds(threshCount);
@@ -142,10 +158,12 @@ std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
     do
     {
         double sigma = 0.0;
+        double r = 0.0;
         for (int i = 0; i <= threshCount; ++i)
         {
-            const double muRange = getMuRange(mu, omega, curThresholds, i);
             const double omegaRange = getOmegaRange(omega, curThresholds, i);
+            const double muRange = getMuRange(mu, curThresholds, i) / omegaRange;
+            r += omegaRange * muRange;
             sigma += (muT - muRange) * (muT - muRange) * omegaRange;
         }
 
@@ -161,6 +179,7 @@ std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
     while (incThresholds(curThresholds));
 
 
+    delete[] probability;
     delete[] omega;
     delete[] mu;
 
@@ -169,8 +188,10 @@ std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
 
 int main(const int argc, const char* argv[])
 {
-    const std::string fileName = "woman";
-    const std::string path = argc > 2 ? argv[2] : "images/" + fileName + ".pnm";
+    //const std::string fileName = "woman";
+    //const std::string path = argc > 2 ? argv[2] : "images/" + fileName + ".pnm";
+    const std::string path = argc > 2 ? argv[2] : "itmo-comp-arch22-lab4-Ismaxis\\test_data\\in.pgm";
+    //const std::string path = argc > 2 ? argv[2] : "images/image1_mod.pnm";
     try
     {
         PnmImage image;
@@ -178,6 +199,7 @@ int main(const int argc, const char* argv[])
         image.loadFromFile(path);
 
         const std::vector<int> thresholds = otsuThreshold(image, 3);
+        //const std::vector<int> thresholds = {77, 130, 187};
         auto* map = new uint8_t[INTENSITY_LAYER_NUMBER];
         int cur = 0;
         for (int i = 0; i < INTENSITY_LAYER_NUMBER; ++i)
@@ -208,7 +230,13 @@ int main(const int argc, const char* argv[])
 
         delete[] map;
 
-        image.saveToFile("images/" + fileName + "_bin.pnm");
+        //image.saveToFile("images/" + fileName + "_bin.pnm");
+        for (int i = 0; i < thresholds.size(); ++i)
+        {
+            std::cout << thresholds[i] << ' ';
+        }
+        image.saveToFile("itmo-comp-arch22-lab4-Ismaxis\\test_data\\out.pgm");
+        //image.saveToFile("images/image1_bin.pnm");
     }
     catch (std::ios_base::failure& e)
     {
