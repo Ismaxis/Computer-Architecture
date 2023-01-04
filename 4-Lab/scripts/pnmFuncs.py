@@ -1,4 +1,6 @@
 import numpy as np
+import math
+import pygame as pg
 
 
 class PnmImage:
@@ -52,3 +54,29 @@ def imageFromBinaryFile(path: str) -> PnmImage:
                     int.from_bytes(r, "little", signed=False))
 
         return image
+
+
+def putTogether(images: tuple[PnmImage]) -> None:
+    PIXEL_SIZE = 1
+    n = math.ceil(math.sqrt(len(images)))
+    WIN_SIZE = [images[0].x * n * PIXEL_SIZE, PIXEL_SIZE *
+                images[0].y * ((len(images)+n-1)//n)]
+
+    win = pg.display.set_mode(WIN_SIZE)
+    x = 0
+    y = 0
+    for image in images:
+        for i in range(image.y):
+            for j in range(image.x):
+                pg.draw.rect(win, (image.storage[i][j], image.storage[i][j],
+                                   image.storage[i][j]), (x + j*PIXEL_SIZE, y + i*PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE))
+        pg.display.update()
+        x += images[0].x * PIXEL_SIZE
+        if (x >= WIN_SIZE[0]):
+            x = 0
+            y += images[0].y * PIXEL_SIZE
+
+    while True:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                quit()

@@ -1,29 +1,17 @@
-import pygame as pg
-
 import pnmFuncs
 
-PIXEL_SIZE = 2
+# woman = pnmFuncs.imageFromBinaryFile("../images/woman.pnm")
+# woman_bin = pnmFuncs.imageFromBinaryFile("../images/woman_bin.pnm")
+# woman_bin_new = pnmFuncs.imageFromBinaryFile("../images/woman_bin_new.pnm")
+# drop = pnmFuncs.imageFromBinaryFile("../images/drop.pnm")
+# drop_bin = pnmFuncs.imageFromBinaryFile("../images/drop_bin.pnm")
+# drop_bin_new = pnmFuncs.imageFromBinaryFile("../images/drop_bin_new.pnm")
+# drop_bin_new_3 = pnmFuncs.imageFromBinaryFile("../images/drop_bin_new_3.pnm")
+imageA = pnmFuncs.imageFromBinaryFile(
+    "..\itmo-comp-arch22-lab4-Ismaxis\\test_data\\in.pgm")
+imageB = pnmFuncs.imageFromBinaryFile(
+    "..\itmo-comp-arch22-lab4-Ismaxis\\test_data\\out.pgm")
+imageC = pnmFuncs.imageFromBinaryFile(
+    "..\itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_new.pgm")
 
-imageA = pnmFuncs.imageFromBinaryFile("../images/woman_bin.pnm")
-imageB = pnmFuncs.imageFromBinaryFile("../images/woman_bin_4.pnm")
-
-WIN_SIZE = ((imageA.x + imageB.x)*PIXEL_SIZE,
-            max(imageA.y, imageB.y)*PIXEL_SIZE)
-win = pg.display.set_mode(WIN_SIZE)
-
-for i in range(imageA.y):
-    for j in range(imageA.x):
-        pg.draw.rect(win, (imageA.storage[i][j], imageA.storage[i][j],
-                     imageA.storage[i][j]), (j*PIXEL_SIZE, i*PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE))
-
-for i in range(imageB.y):
-    for j in range(imageB.x):
-        pg.draw.rect(win, (imageB.storage[i][j], imageB.storage[i][j],
-                           imageB.storage[i][j]), ((imageA.x + j)*PIXEL_SIZE, i*PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE))
-
-pg.display.update()
-
-while True:
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
-            quit()
+pnmFuncs.putTogether((imageA, imageB, imageC))
