@@ -11,31 +11,35 @@ private:
     int sizeY = 0;
     std::vector<std::vector<uint8_t>> storage;
 public:
-
-    int getXSize() const {
+    int getXSize() const
+    {
         return sizeX;
     }
-    int getYSize() const {
+
+    int getYSize() const
+    {
         return sizeY;
     }
 
     uint8_t getPixel(const int x, const int y) const
     {
-        return storage.at(y).at(x);    
+        return storage.at(y).at(x);
     }
+
     void setPixel(const uint8_t value, const int x, const int y)
     {
-        storage.at(y).at(x) = value;    
+        storage.at(y).at(x) = value;
     }
 
     void loadFromFile(const std::string& path)
     {
         std::ifstream input;
         input.open(path, std::ios::binary);
-        if (!input.is_open()) 
+        if (!input.is_open())
         {
             throw std::ios_base::failure("Can`t open input file");
-        } 
+        }
+        
         std::string type;
         input >> type;
         if (type != "P5")
@@ -45,14 +49,14 @@ public:
         char buff;
         input.read(&buff, 1);
         input.read(&buff, 1);
-        while(buff != ' ')
+        while (buff != ' ')
         {
             sizeX *= 10;
             sizeX += buff - '0';
             input.read(&buff, 1);
         }
         input.read(&buff, 1);
-        while(buff != '\n')
+        while (buff != '\n')
         {
             sizeY *= 10;
             sizeY += buff - '0';
@@ -61,7 +65,7 @@ public:
 
         int huesCount = 0;
         input.read(&buff, 1);
-        while(buff != '\n')
+        while (buff != '\n')
         {
             huesCount *= 10;
             huesCount += buff - '0';
@@ -89,12 +93,12 @@ public:
     {
         std::ofstream output;
         output.open(path, std::ios::binary);
-        if (!output.is_open()) 
+        if (!output.is_open())
         {
             throw std::ios_base::failure("Can`t open output file");
         }
         output.write("P5\n", 3);
-        
+
         output.write(std::to_string(sizeX).c_str(), ceil(log10(sizeX)));
         output.write(" ", 1);
         output.write(std::to_string(sizeY).c_str(), ceil(log10(sizeY)));
@@ -110,4 +114,3 @@ public:
         }
     }
 };
-
