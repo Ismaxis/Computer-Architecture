@@ -2,10 +2,10 @@ import pygame as pg
 
 import pnmFuncs
 
-PIXEL_SIZE = 1
+PIXEL_SIZE = 2
 
-imageA = pnmFuncs.imageFromBinaryFile("../images/woman.pnm")
-imageB = pnmFuncs.imageFromBinaryFile("../images/woman_bin.pnm")
+imageA = pnmFuncs.imageFromBinaryFile("../images/woman_bin.pnm")
+imageB = pnmFuncs.imageFromBinaryFile("../images/woman_bin_4.pnm")
 
 WIN_SIZE = ((imageA.x + imageB.x)*PIXEL_SIZE,
             max(imageA.y, imageB.y)*PIXEL_SIZE)

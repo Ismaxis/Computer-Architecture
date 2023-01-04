@@ -119,7 +119,7 @@ int resetDigit(std::vector<int>& thresholds, const int i) {
     {
         if (thresholds[i] == INTENSITY_LAYER_NUMBER - 1)
         {
-            return INTENSITY_LAYER_NUMBER;
+            return INTENSITY_LAYER_NUMBER + 1;
         }
 
         return ++thresholds[i] + 1;
@@ -136,10 +136,14 @@ int resetDigit(std::vector<int>& thresholds, const int i) {
 }
 
 bool incThresholds(std::vector<int>& thresholds) {
+    //if (thresholds[2] == 254)
+    //{
+    //    std::cout << thresholds[0] << ' ' << thresholds[1] << ' ' << thresholds[2] << '\n';
+    //}
     const int last = thresholds.size() - 1;
     if (thresholds[last] == INTENSITY_LAYER_NUMBER - 1) 
     {
-        if (resetDigit(thresholds, last) == INTENSITY_LAYER_NUMBER)
+        if (resetDigit(thresholds, last) == INTENSITY_LAYER_NUMBER + 1)
         {
             return false;
         }
@@ -177,10 +181,6 @@ std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
     {
         mu[i] = mu[i-1] + i*omega[i];
     }
-    //for (int i = 1; i < INTENSITY_LAYER_NUMBER; ++i)
-    //{
-    //    mu[i] /= omega[i];
-    //}
 
     // Filling initial thresholds
     std::vector<int> curThresholds(threshCount);
@@ -198,7 +198,8 @@ std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
         for (int i = 0; i < threshCount; ++i)
         {
             const double muRange = getMuRange(mu, curThresholds, i) / omega[curThresholds[i]];
-            sigma += (muT - muRange)*(muT - muRange)*getOmegaRange(omega, curThresholds, i);
+            const double omegaRange = getOmegaRange(omega, curThresholds, i);
+            sigma += (muT - muRange)*(muT - muRange)*omegaRange;
         }
 
         const double muRange = mu[INTENSITY_LAYER_NUMBER - 1] - mu[curThresholds[threshCount - 1]];
@@ -231,7 +232,6 @@ int main(const int argc, char const* argv[])
 
         image.loadFromFile(path);
 
-        //const std::vector<int> thresholds = {38, 77, 89, 95, 107, 114, 132, 198};
         const std::vector<int> thresholds = otsuThreshold(image, 3);
         uint8_t* map = new uint8_t[INTENSITY_LAYER_NUMBER];
         int cur = 0;
