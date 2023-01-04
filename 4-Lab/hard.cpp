@@ -117,9 +117,13 @@ std::vector<int> otsuThreshold1(const PnmImage& image)
 int resetDigit(std::vector<int>& thresholds, const int i) {
     if (i == 0)
     {
+        if (thresholds[i] == INTENSITY_LAYER_NUMBER - 1)
+        {
+            return INTENSITY_LAYER_NUMBER;
+        }
+
         return ++thresholds[i] + 1;
     }
-
     if (thresholds[i] >= INTENSITY_LAYER_NUMBER - (thresholds.size() - i))
     {
         thresholds[i] = resetDigit(thresholds, i - 1);
@@ -196,6 +200,7 @@ std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
             const double muRange = getMuRange(mu, curThresholds, i) / omega[curThresholds[i]];
             sigma += (muT - muRange)*(muT - muRange)*getOmegaRange(omega, curThresholds, i);
         }
+
         const double muRange = mu[INTENSITY_LAYER_NUMBER - 1] - mu[curThresholds[threshCount - 1]];
         sigma += (muT - muRange)*(muT - muRange)*(1.0 - omega[curThresholds[threshCount - 1]]);
 
@@ -227,21 +232,24 @@ int main(const int argc, char const* argv[])
         image.loadFromFile(path);
 
         //const std::vector<int> thresholds = {38, 77, 89, 95, 107, 114, 132, 198};
-        const std::vector<int> thresholds = otsuThreshold(image, 2);
+        const std::vector<int> thresholds = otsuThreshold(image, 3);
         uint8_t* map = new uint8_t[INTENSITY_LAYER_NUMBER];
         int cur = 0;
         for (int i = 0; i < INTENSITY_LAYER_NUMBER; ++i)
         {
-            if (cur == thresholds.size() - 1)
+            if (cur == thresholds.size())
             {
-                map[i] = (thresholds[cur] + INTENSITY_LAYER_NUMBER - 1) / 2;
-                continue;
+                map[i] = INTENSITY_LAYER_NUMBER - 1;
             }
             else if (i >= thresholds[cur])
             {
                 ++cur;
+                --i;
             }
-            map[i] = cur > 0 ? (thresholds[cur-1] + thresholds[cur]) / 2 : thresholds[0] / 2;
+            else
+            {
+                map[i] = thresholds[cur];
+            }
         }
 
         for (int x = 0; x < image.getXSize(); ++x)
