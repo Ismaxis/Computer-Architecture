@@ -9,7 +9,7 @@ class PnmImage
 private:
     int sizeX = 0;
     int sizeY = 0;
-    std::vector<std::vector<char>> storage;
+    std::vector<std::vector<uint8_t>> storage;
 public:
 
     int getXSize() const {
@@ -19,11 +19,11 @@ public:
         return sizeY;
     }
 
-    char getPixel(const int x, const int y) const
+    uint8_t getPixel(const int x, const int y) const
     {
         return storage.at(y).at(x);    
     }
-    void setPixel(const char value, const int x, const int y)
+    void setPixel(const uint8_t value, const int x, const int y)
     {
         storage.at(y).at(x) = value;    
     }
@@ -78,8 +78,9 @@ public:
         {
             for (int x = 0; x < sizeX; ++x)
             {
-                input.read(&buff, 1);
-                storage.at(y).push_back(buff);
+                uint8_t uintBuff = 0;
+                input.read((char*)&uintBuff, 1);
+                storage.at(y).push_back(uintBuff);
             }
         }
     }
@@ -104,7 +105,7 @@ public:
         {
             for (int x = 0; x < sizeX; ++x)
             {
-                output.write(&storage.at(y).at(x), sizeof(char));
+                output.write((char*)&storage.at(y).at(x), sizeof(uint8_t));
             }
         }
     }

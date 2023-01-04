@@ -1,8 +1,14 @@
+import numpy as np
+
+
 class PnmImage:
     def __init__(self, x, y) -> None:
         self.x = x
         self.y = y
         self.storage = []
+
+    def getNpArray(self) -> np.array:
+        return np.array(self.storage)
 
 
 def imageFromFile(path: str) -> PnmImage:
@@ -21,7 +27,7 @@ def imageFromFile(path: str) -> PnmImage:
 
 def imageFromBinaryFile(path: str) -> PnmImage:
     with open(path, "rb") as file:
-        print(file.read(3))
+        file.read(3)
         byte = file.read(1)
         x = 0
         while (byte != b' '):
@@ -36,11 +42,13 @@ def imageFromBinaryFile(path: str) -> PnmImage:
             y += int(byte)
             byte = file.read(1)
 
-        print(file.read(4))  # 255\n
+        file.read(4)  # 255\n
         image = PnmImage(x, y)
         for i in range(y):
             image.storage.append([])
             for j in range(x):
                 r = file.read(1)
-                image.storage[i].append(int.from_bytes(r, "little"))
+                image.storage[i].append(
+                    int.from_bytes(r, "little", signed=False))
+
         return image

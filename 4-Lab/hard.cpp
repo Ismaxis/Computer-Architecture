@@ -6,17 +6,35 @@
 
 constexpr int INTENSITY_LAYER_NUMBER = 256;
 
-void calculateHist(const PnmImage& image, int *hist) {
+void calculateOmegas(const PnmImage& image, double *omega)
+{
     for (int x = 0; x < image.getXSize(); ++x)
     {
         for (int y = 0; y < image.getYSize(); ++y)
         {
-            ++hist[image.getPixel(x,y)];
+            ++omega[image.getPixel(x,y)];
         }
     }
 }
 
-int calculateIntensitySum(const PnmImage& image) {
+void calculatePrefOmegas(const PnmImage& image, double *omega)
+{
+    calculateOmegas(image, omega);
+
+    for (int i = 1; i < INTENSITY_LAYER_NUMBER; ++i)
+    {
+        omega[i] += omega[i-1];
+    }
+
+    const int totalPixelCount = image.getXSize() * image.getYSize();
+    for (int i = 0; i < INTENSITY_LAYER_NUMBER; ++i)
+    {
+        omega[i] /= totalPixelCount;
+    }
+}
+
+int calculateIntensitySum(const PnmImage& image)
+{
     int sum = 0;
     for (int x = 0; x < image.getXSize(); ++x)
     {
@@ -29,66 +47,215 @@ int calculateIntensitySum(const PnmImage& image) {
     return sum;
 }
 
-int otsuThreshold(const PnmImage& image) {
-    int* hist = new int[INTENSITY_LAYER_NUMBER];
-    calculateHist(image, hist);
+std::vector<int> otsuThreshold1(const PnmImage& image)
+{
+    double* hist = new double[INTENSITY_LAYER_NUMBER];
+    for (int i = 0; i < INTENSITY_LAYER_NUMBER; ++i)
+    {
+        hist[i] = 0;
+    }
+    calculateOmegas(image, hist);
 
-    int all_pixel_count = image.getXSize() * image.getYSize();
-    int all_intensity_sum = calculateIntensitySum(image);
+    const int allPixelCount = image.getXSize() * image.getYSize();
+    const int allIntensitySum = calculateIntensitySum(image);
 
-    int best_thresh = 0;
-    double best_sigma = 0.0;
+    std::vector<int> res(2);
 
-    int first_class_pixel_count = 0;
-    int first_class_intensity_sum = 0;
+    double bestSigma = 0.0;
 
-    // Перебираем границу между классами
-    // thresh < INTENSITY_LAYER_NUMBER - 1, т.к. при 255 в ноль уходит знаменатель внутри for
-    for (int thresh = 0; thresh < INTENSITY_LAYER_NUMBER - 1; ++thresh) {
-        first_class_pixel_count += hist[thresh];
-        first_class_intensity_sum += thresh * hist[thresh];
+    int firstClassPixelCount = 0;
+    int firstClassIntensitySum = 0;
+    for (int thresh1 = 0; thresh1 < INTENSITY_LAYER_NUMBER - 2; ++thresh1) 
+    {
+        firstClassPixelCount += hist[thresh1];
+        firstClassIntensitySum += thresh1 * hist[thresh1];
+        const double firstClassProb = firstClassPixelCount / (double)allPixelCount;
+    
+        int secondClassPixelCount = 0;
+        int secondClassIntensitySum = 0;
+        int bestThresh2 = 0;
+        double bestSigma2 = 0.0;
+        for (int thresh2 = thresh1; thresh2 < INTENSITY_LAYER_NUMBER - 1; ++thresh2)
+        {
+            secondClassPixelCount += hist[thresh1];
+            secondClassIntensitySum += thresh1 * hist[thresh1];
+            const double secondClassProb = firstClassPixelCount / (double)allPixelCount;
+            const double thirdClassProb = 1.0 - secondClassProb - firstClassProb;
 
-        double first_class_prob = first_class_pixel_count / (double)all_pixel_count;
-        double second_class_prob = 1.0 - first_class_prob;
+            const double secondClassMean = secondClassIntensitySum / (double)secondClassPixelCount;
+            const double thirdClassMean = (allIntensitySum - secondClassIntensitySum - firstClassIntensitySum) / (double)(allPixelCount - secondClassPixelCount - firstClassPixelCount);
 
-        double first_class_mean = first_class_intensity_sum / (double)first_class_pixel_count;
-        double second_class_mean = (all_intensity_sum - first_class_intensity_sum) / (double)(all_pixel_count - first_class_pixel_count);
+            const double meanDelta2 = secondClassMean - thirdClassMean;
 
-        double mean_delta = first_class_mean - second_class_mean;
+            const double sigma2 = secondClassProb * thirdClassProb * meanDelta2 * meanDelta2;
 
-        double sigma = first_class_prob * second_class_prob * mean_delta * mean_delta;
+            if (sigma2 > bestSigma2) 
+            {
+                bestSigma2 = sigma2;
+                bestThresh2 = thresh2;
+            }
+        }
+        
+        const double firstClassMean = firstClassIntensitySum / (double)firstClassPixelCount;
+        const double secondClassMean = (allIntensitySum - firstClassIntensitySum) / (double)(allPixelCount - firstClassPixelCount);
 
-        if (sigma > best_sigma) {
-            best_sigma = sigma;
-            best_thresh = thresh;
+        const double meanDelta1 = firstClassMean - secondClassMean;
+
+        const double sigma1 = firstClassProb * (1.0 - firstClassProb) * meanDelta1 * meanDelta1;
+
+        if (sigma1 + bestSigma2 > bestSigma) 
+        {
+            bestSigma = sigma1 + bestSigma2;
+            res[0] = thresh1;
+            res[1] = bestThresh2;
         }
     }
+    //delete[] hist;
+    return res;
+}
 
-    return best_thresh;
+int resetDigit(std::vector<int>& thresholds, const int i) {
+    if (i == 0)
+    {
+        return ++thresholds[i] + 1;
+    }
+
+    if (thresholds[i] >= INTENSITY_LAYER_NUMBER - (thresholds.size() - i))
+    {
+        thresholds[i] = resetDigit(thresholds, i - 1);
+    }
+    else
+    {
+        ++thresholds[i];
+    }
+    return thresholds[i] + 1;
+}
+
+bool incThresholds(std::vector<int>& thresholds) {
+    const int last = thresholds.size() - 1;
+    if (thresholds[last] == INTENSITY_LAYER_NUMBER - 1) 
+    {
+        if (resetDigit(thresholds, last) == INTENSITY_LAYER_NUMBER)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        ++thresholds[last];
+    }
+    return true;
+}
+
+double getOmegaRange(const double* omega, const std::vector<int>& thresholds, const int i) {
+    const double left = i > 0 ? omega[thresholds[i-1]] : 0.0;
+    const double right = omega[thresholds[i]];
+    return right - left;
+}
+double getMuRange(const double* mu, const std::vector<int>& thresholds, const int i) {
+    const double left = i > 0 ? mu[thresholds[i-1]] : 0.0;
+    const double right = mu[thresholds[i]];
+    return right - left;
+}
+
+std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
+{
+    // Omega calculations
+    auto* omega = new double[INTENSITY_LAYER_NUMBER];
+    memset(omega, 0.0,INTENSITY_LAYER_NUMBER*sizeof(double));
+    calculatePrefOmegas(image, omega);
+
+    // Mu calculations
+    const double muT = calculateIntensitySum(image);
+    auto* mu = new double[INTENSITY_LAYER_NUMBER];
+    mu[0] = 0; 
+    for (int i = 1; i < INTENSITY_LAYER_NUMBER; ++i)
+    {
+        mu[i] = mu[i-1] + i*omega[i];
+    }
+    //for (int i = 1; i < INTENSITY_LAYER_NUMBER; ++i)
+    //{
+    //    mu[i] /= omega[i];
+    //}
+
+    // Filling initial thresholds
+    std::vector<int> curThresholds(threshCount);
+    for (int i = 0; i < threshCount; ++i)
+    {
+        curThresholds[i] = i;
+    }
+
+    // Calculation best thresholds
+    double bestSigma = 0.0;
+    std::vector<int> bestThresholds(threshCount);
+    do
+    {
+        double sigma = 0.0;
+        for (int i = 0; i < threshCount; ++i)
+        {
+            const double muRange = getMuRange(mu, curThresholds, i) / omega[curThresholds[i]];
+            sigma += (muT - muRange)*(muT - muRange)*getOmegaRange(omega, curThresholds, i);
+        }
+        const double muRange = mu[INTENSITY_LAYER_NUMBER - 1] - mu[curThresholds[threshCount - 1]];
+        sigma += (muT - muRange)*(muT - muRange)*(1.0 - omega[curThresholds[threshCount - 1]]);
+
+        if (sigma > bestSigma)
+        {
+            for (int i = 0; i < threshCount; ++i)
+            {
+                bestThresholds[i] = curThresholds[i];
+            }
+            bestSigma = sigma;
+        }
+    } while (incThresholds(curThresholds));
+
+
+    delete[] omega;
+    delete[] mu;
+
+    return bestThresholds;
 }
 
 int main(const int argc, char const* argv[])
 {
-    const std::string path = argc > 2 ? argv[2] : "images/drop.pnm";
+    const std::string fileName = "woman";
+    const std::string path = argc > 2 ? argv[2] : "images/" + fileName + ".pnm";
     try 
     {
         PnmImage image;
 
         image.loadFromFile(path);
 
-        const int threshold = otsuThreshold(image);
-        //const int threshold = 100;
+        //const std::vector<int> thresholds = {38, 77, 89, 95, 107, 114, 132, 198};
+        const std::vector<int> thresholds = otsuThreshold(image, 2);
+        uint8_t* map = new uint8_t[INTENSITY_LAYER_NUMBER];
+        int cur = 0;
+        for (int i = 0; i < INTENSITY_LAYER_NUMBER; ++i)
+        {
+            if (cur == thresholds.size() - 1)
+            {
+                map[i] = (thresholds[cur] + INTENSITY_LAYER_NUMBER - 1) / 2;
+                continue;
+            }
+            else if (i >= thresholds[cur])
+            {
+                ++cur;
+            }
+            map[i] = cur > 0 ? (thresholds[cur-1] + thresholds[cur]) / 2 : thresholds[0] / 2;
+        }
 
         for (int x = 0; x < image.getXSize(); ++x)
         {
             for (int y = 0; y < image.getYSize(); ++y)
             {
-                unsigned int pixel = image.getPixel(x,y);
-                image.setPixel(pixel > threshold ? (char)255 : 0, x, y);
+                const unsigned int pixel = image.getPixel(x,y);
+                image.setPixel(map[pixel], x, y);
             }
         }
 
-        image.saveToFile("images/drop_bin.pnm");
+        delete[] map;
+
+        image.saveToFile("images/" + fileName + "_bin.pnm");
     }
     catch (std::ios_base::failure& e) 
     {
