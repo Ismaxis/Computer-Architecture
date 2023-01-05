@@ -72,7 +72,7 @@ int resetDigit(std::vector<int>& thresholds, const int i)
 {
     if (i == 0)
     {
-        if (thresholds[i] == INTENSITY_LAYER_COUNT - 1)
+        if (thresholds[i] >= INTENSITY_LAYER_COUNT - 1)
         {
             return INTENSITY_LAYER_COUNT + 1;
         }
@@ -94,9 +94,9 @@ int resetDigit(std::vector<int>& thresholds, const int i)
 bool incThresholds(std::vector<int>& thresholds)
 {
     const int last = thresholds.size() - 1;
-    if (thresholds[last] == INTENSITY_LAYER_COUNT - 1)
+    if (thresholds[last] >= INTENSITY_LAYER_COUNT - 1)
     {
-        if (resetDigit(thresholds, last) == INTENSITY_LAYER_COUNT + 1)
+        if (resetDigit(thresholds, last) >= INTENSITY_LAYER_COUNT + 1)
         {
             return false;
         }
@@ -139,9 +139,6 @@ std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
     // Mu's calculations
     const auto* mu = calculatePrefMus(probability);
 
-    // MuTotal calculations
-    const double muT = mu[INTENSITY_LAYER_COUNT - 1];
-
     // Filling initial thresholds
     std::vector<int> curThresholds(threshCount);
     for (int i = 0; i < threshCount; ++i)
@@ -150,35 +147,71 @@ std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
     }
 
     // Calculation best thresholds
-    double bestSigma = 0.0;
-    std::vector<int> bestThresholds(threshCount);
-    do
+    std::vector<std::pair<double, std::vector<int>>> results;
+    bool running = true;
+
+    omp_set_num_threads(1);
+#pragma omp parallel shared(running, curThresholds, results, omega, mu)
     {
-        double sigma = 0.0;
-        for (int i = 0; i <= threshCount; ++i)
+        double bestSigma = 0.0;
+        std::vector<int> bestThresholds(threshCount);
+        std::vector<int> curThresholdsCopy(threshCount);
+        while (running)
         {
-            const double omegaRange = getOmegaRange(omega, curThresholds, i);
-            const double muRange = getMuRange(mu, curThresholds, i) / omegaRange;
-            sigma += (muT - muRange) * (muT - muRange) * omegaRange;
+            double sigma = 0.0;
+            curThresholdsCopy = curThresholds;
+            for (int i = 0; i <= threshCount; ++i)
+            {
+                const double omegaRange = getOmegaRange(omega, curThresholdsCopy, i);
+                const double muRange = getMuRange(mu, curThresholdsCopy, i) / omegaRange;
+                sigma += muRange * muRange * omegaRange;
+            }
+            if (sigma > bestSigma)
+            {
+                for (int i = 0; i < threshCount; ++i)
+                {
+                    bestThresholds[i] = curThresholdsCopy[i];
+                }
+                bestSigma = sigma;
+            }
+#pragma omp critical
+            {
+                if (!incThresholds(curThresholds))
+                {
+                    running = false;
+                }
+            }
         }
 
-        if (sigma > bestSigma)
+#pragma omp critical
         {
-            for (int i = 0; i < threshCount; ++i)
-            {
-                bestThresholds[i] = curThresholds[i];
-            }
-            bestSigma = sigma;
+            results.emplace_back(bestSigma, bestThresholds);
         }
     }
-    while (incThresholds(curThresholds));
 
+    for (const auto& element : curThresholds)
+    {
+        std::cout << element << ' ';
+    }
+
+    double bestOverallSigma = 0.0;
+    int bestOverallIndex = 0;
+    for (int i = 0; i < results.size(); ++i)
+    {
+        if (results[i].first > bestOverallSigma)
+        {
+            bestOverallSigma = results[i].first;
+            bestOverallIndex = i;
+        }
+    }
+
+    std::cout << "\n" << bestOverallIndex << " is the winner: " << bestOverallSigma << '\n';
 
     delete[] probability;
     delete[] omega;
     delete[] mu;
 
-    return bestThresholds;
+    return results[bestOverallIndex].second;
 }
 
 int main(const int argc, const char* argv[])
@@ -192,8 +225,22 @@ int main(const int argc, const char* argv[])
         PnmImage image;
 
         image.loadFromFile(path);
+        std::vector<int> thresholds;
+        for (int i = 0; i < 1; ++i)
+        {
+            float tstart = omp_get_wtime();
 
-        const std::vector<int> thresholds = otsuThreshold(image, 3);
+            thresholds = otsuThreshold(image, 3);
+
+            float tend = omp_get_wtime();
+            printf("Time (sec): %f\n", tend - tstart);
+
+            for (int i = 0; i < thresholds.size(); ++i)
+            {
+                std::cout << thresholds[i] << ' ';
+            }
+            std::cout << "\n\n";
+        }
         auto* map = new uint8_t[INTENSITY_LAYER_COUNT];
         int cur = 0;
         for (int i = 0; i < INTENSITY_LAYER_COUNT; ++i)
@@ -229,11 +276,7 @@ int main(const int argc, const char* argv[])
         delete[] map;
 
         //image.saveToFile("images/" + fileName + "_bin_new.pnm");
-        for (int i = 0; i < thresholds.size(); ++i)
-        {
-            std::cout << thresholds[i] << ' ';
-        }
-        image.saveToFile("itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_new.pgm");
+        image.saveToFile("itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_new_1.pgm");
         //image.saveToFile("images/image1_bin.pnm");
     }
     catch (std::ios_base::failure& e)
