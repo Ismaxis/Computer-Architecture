@@ -113,4 +113,15 @@ public:
             }
         }
     }
+
+    void applyThresholds(const uint8_t* classes)
+    {
+        for (int x = 0; x < getXSize(); ++x)
+        {
+            for (int y = 0; y < getYSize(); ++y)
+            {
+                setPixel(classes[getPixel(x, y)], x, y);
+            }
+        }
+    }
 };

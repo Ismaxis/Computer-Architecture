@@ -21,10 +21,19 @@
     <ClCompile Include="PnmImage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="otsuFuncs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PnmImage.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="otsuFuncs.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

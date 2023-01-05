@@ -144,9 +144,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="hard.cpp" />
+    <ClCompile Include="otsuFuncs.cpp" />
     <ClCompile Include="PnmImage.cpp" />
+    <ClCompile Include="test.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="otsuFuncs.h" />
     <ClInclude Include="PnmImage.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
