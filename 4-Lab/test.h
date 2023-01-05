@@ -6,6 +6,12 @@
 inline void threadsTest(const int thresholdsCount, const std::string& inputPath, const std::string& outputPath = "")
 {
     std::cout << "ThreadsTEST\n";
+#ifdef _OPENMP
+    std::cout << "OpenMP is active\n";
+#else
+    std::cout << "OpenMP is disabled\n";
+#endif
+
     try
     {
         PnmImage image;
