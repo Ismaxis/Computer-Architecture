@@ -10,12 +10,12 @@ import pnmFuncs
 # imageA = pnmFuncs.imageFromBinaryFile(
 #     "..\itmo-comp-arch22-lab4-Ismaxis\\test_data\\in.pgm")
 singlethread = pnmFuncs.imageFromBinaryFile(
-    "..\itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_new_1.pgm")
+    "..\itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_1.pgm")
 parallel_2 = pnmFuncs.imageFromBinaryFile(
-    "..\itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_new_2.pgm")
+    "..\itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_2.pgm")
 parallel_3 = pnmFuncs.imageFromBinaryFile(
-    "..\itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_new_3.pgm")
+    "..\itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_3.pgm")
 parallel_4 = pnmFuncs.imageFromBinaryFile(
-    "..\itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_new_4.pgm")
+    "..\itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_4.pgm")
 
 pnmFuncs.putTogether((singlethread, parallel_2, parallel_3, parallel_4))

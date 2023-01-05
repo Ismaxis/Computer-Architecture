@@ -1,4 +1,6 @@
 .vs/
 Debug/
-
+Release/
 scripts/__pycache__/
+scripts/*.cpp
+itmo-comp-arch22-lab4-Ismaxis/

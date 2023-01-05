@@ -150,7 +150,6 @@ std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
     std::vector<std::pair<double, std::vector<int>>> results;
     bool running = true;
 
-    omp_set_num_threads(1);
 #pragma omp parallel shared(running, curThresholds, results, omega, mu)
     {
         double bestSigma = 0.0;
@@ -189,11 +188,6 @@ std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
         }
     }
 
-    for (const auto& element : curThresholds)
-    {
-        std::cout << element << ' ';
-    }
-
     double bestOverallSigma = 0.0;
     int bestOverallIndex = 0;
     for (int i = 0; i < results.size(); ++i)
@@ -225,59 +219,56 @@ int main(const int argc, const char* argv[])
         PnmImage image;
 
         image.loadFromFile(path);
-        std::vector<int> thresholds;
-        for (int i = 0; i < 1; ++i)
-        {
-            float tstart = omp_get_wtime();
-
-            thresholds = otsuThreshold(image, 3);
-
-            float tend = omp_get_wtime();
-            printf("Time (sec): %f\n", tend - tstart);
-
-            for (int i = 0; i < thresholds.size(); ++i)
-            {
-                std::cout << thresholds[i] << ' ';
-            }
-            std::cout << "\n\n";
-        }
         auto* map = new uint8_t[INTENSITY_LAYER_COUNT];
-        int cur = 0;
-        for (int i = 0; i < INTENSITY_LAYER_COUNT; ++i)
+        for (int i = 1; i < 14; ++i)
         {
-            if (cur == thresholds.size())
-            {
-                map[i] = INTENSITY_LAYER_COUNT - 1;
-            }
-            else if (i >= thresholds[cur])
-            {
-                ++cur;
-                --i;
-            }
-            else if (cur == 0)
-            {
-                map[i] = thresholds[0] / 2;
-            }
-            else
-            {
-                map[i] = (thresholds[cur] + thresholds[cur - 1]) / 2;
-            }
-        }
+            omp_set_num_threads(i);
+            const float tstart = omp_get_wtime();
 
-        for (int x = 0; x < image.getXSize(); ++x)
-        {
-            for (int y = 0; y < image.getYSize(); ++y)
-            {
-                const unsigned int pixel = image.getPixel(x, y);
-                image.setPixel(map[pixel], x, y);
-            }
-        }
+            std::vector<int> thresholds;
+            thresholds = otsuThreshold(image, 4);
 
+            const float tend = omp_get_wtime();
+            printf("%d Threads:\n\tTime (sec): %f\n", i, tend - tstart);
+
+            int cur = 0;
+            for (int i = 0; i < INTENSITY_LAYER_COUNT; ++i)
+            {
+                if (cur == thresholds.size())
+                {
+                    map[i] = INTENSITY_LAYER_COUNT - 1;
+                }
+                else if (i >= thresholds[cur])
+                {
+                    ++cur;
+                    --i;
+                }
+                else if (cur == 0)
+                {
+                    map[i] = thresholds[0] / 2;
+                }
+                else
+                {
+                    map[i] = (thresholds[cur] + thresholds[cur - 1]) / 2;
+                }
+            }
+            PnmImage copyOfImage(image);
+            for (int x = 0; x < copyOfImage.getXSize(); ++x)
+            {
+                for (int y = 0; y < copyOfImage.getYSize(); ++y)
+                {
+                    const unsigned int pixel = copyOfImage.getPixel(x, y);
+                    copyOfImage.setPixel(map[pixel], x, y);
+                }
+            }
+
+
+            //image.saveToFile("images/" + fileName + "_bin_new.pnm");
+            copyOfImage.saveToFile(
+                "itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_parallel_" + std::to_string(i) + ".pgm");
+            //image.saveToFile("images/image1_bin.pnm");
+        }
         delete[] map;
-
-        //image.saveToFile("images/" + fileName + "_bin_new.pnm");
-        image.saveToFile("itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_new_1.pgm");
-        //image.saveToFile("images/image1_bin.pnm");
     }
     catch (std::ios_base::failure& e)
     {
