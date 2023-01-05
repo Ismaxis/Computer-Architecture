@@ -68,45 +68,35 @@ double* calculatePrefMus(const double* probabilities)
     return mu;
 }
 
-int resetDigit(std::vector<int>& thresholds, const int i)
+void incDigit(std::vector<int>& thresholds, const int digitIndexToInc)
 {
-    if (i == 0)
+    if (thresholds[digitIndexToInc] >= INTENSITY_LAYER_COUNT - (thresholds.size() - digitIndexToInc)) // 1 2 3 4
     {
-        if (thresholds[i] >= INTENSITY_LAYER_COUNT - 1)
-        {
-            return INTENSITY_LAYER_COUNT + 1;
-        }
-
-        return ++thresholds[i] + 1;
-    }
-    if (thresholds[i] >= INTENSITY_LAYER_COUNT - (thresholds.size() - i))
-    {
-        thresholds[i] = resetDigit(thresholds, i - 1);
+        incDigit(thresholds, digitIndexToInc - 1);
+        thresholds[digitIndexToInc] = thresholds[digitIndexToInc - 1] + 1;
     }
     else
     {
-        ++thresholds[i];
+        ++thresholds[digitIndexToInc];
     }
-
-    return thresholds[i] + 1;
 }
 
-bool incThresholds(std::vector<int>& thresholds)
+bool isFinished(const std::vector<int>& thresholds) // is next step possible
 {
-    const int last = thresholds.size() - 1;
-    if (thresholds[last] >= INTENSITY_LAYER_COUNT - 1)
+    return thresholds[0] + thresholds.size() >= INTENSITY_LAYER_COUNT;
+}
+
+void updateToNextThresholdSignature(std::vector<int>& thresholds)
+{
+    const int lastDigitIndex = thresholds.size() - 1;
+    if (thresholds[lastDigitIndex] < INTENSITY_LAYER_COUNT - 1)
     {
-        if (resetDigit(thresholds, last) >= INTENSITY_LAYER_COUNT + 1)
-        {
-            return false;
-        }
+        ++thresholds[lastDigitIndex];
     }
     else
     {
-        ++thresholds[last];
+        incDigit(thresholds, lastDigitIndex);
     }
-
-    return true;
 }
 
 double getOmegaRange(const double* omega, const std::vector<int>& thresholds, const int i)
@@ -128,7 +118,7 @@ double getMuRange(const double* mu, const std::vector<int>& thresholds, const in
     return right - left;
 }
 
-std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
+std::vector<int> otsuThreshold(const PnmImage& image, const int thresholdsCount)
 {
     // Probabilities calculations
     const auto* probability = calculateProbabilities(image);
@@ -139,46 +129,75 @@ std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
     // Mu's calculations
     const auto* mu = calculatePrefMus(probability);
 
-    // Filling initial thresholds
-    std::vector<int> curThresholds(threshCount);
-    for (int i = 0; i < threshCount; ++i)
-    {
-        curThresholds[i] = i;
-    }
 
     // Calculation best thresholds
     std::vector<std::pair<double, std::vector<int>>> results;
-    bool running = true;
+    bool isRunning = true;
 
-#pragma omp parallel shared(running, curThresholds, results, omega, mu)
+    std::vector<int> curThresholdSignature(thresholdsCount);
+    // Filling initial thresholds
+    for (int i = 0; i < thresholdsCount; ++i)
     {
+        curThresholdSignature[i] = i;
+    }
+    curThresholdSignature[curThresholdSignature.size() - 1] -= 1;
+
+    //bool isCurThresholdSignatureInitialized = false;
+
+#pragma omp parallel shared(isRunning, curThresholdSignature, results, omega, mu)
+    {
+        std::cout << omp_get_num_threads() << '\n';
         double bestSigma = 0.0;
-        std::vector<int> bestThresholds(threshCount);
-        std::vector<int> curThresholdsCopy(threshCount);
-        while (running)
+        std::vector<int> bestThresholds(thresholdsCount);
+        std::vector<int> curThresholdSignatureCopy(thresholdsCount);
+        while (true)
         {
-            double sigma = 0.0;
-            curThresholdsCopy = curThresholds;
-            for (int i = 0; i <= threshCount; ++i)
+#pragma omp critical
             {
-                const double omegaRange = getOmegaRange(omega, curThresholdsCopy, i);
-                const double muRange = getMuRange(mu, curThresholdsCopy, i) / omegaRange;
+                if (isFinished(curThresholdSignature))
+                {
+                    isRunning = false;
+                }
+                else
+                {
+                    //if (!isCurThresholdSignatureInitialized)
+                    //{
+                    //    // Filling initial thresholds
+                    //    // Its possible to do -1 before cycle
+                    //    for (int i = 0; i < thresholdsCount; ++i)
+                    //    {
+                    //        curThresholdSignature[i] = i;
+                    //    }
+                    //    isCurThresholdSignatureInitialized = true;
+                    //}
+                    //else
+                    //{
+                        updateToNextThresholdSignature(curThresholdSignature);
+                    //}
+
+                    curThresholdSignatureCopy = curThresholdSignature;
+                }
+            }
+
+            if (!isRunning)
+            {
+                break;
+            }
+
+            double sigma = 0.0;
+            for (int i = 0; i <= thresholdsCount; ++i)
+            {
+                const double omegaRange = getOmegaRange(omega, curThresholdSignatureCopy, i);
+                const double muRange = getMuRange(mu, curThresholdSignatureCopy, i) / omegaRange;
                 sigma += muRange * muRange * omegaRange;
             }
             if (sigma > bestSigma)
             {
-                for (int i = 0; i < threshCount; ++i)
+                for (int i = 0; i < thresholdsCount; ++i)
                 {
-                    bestThresholds[i] = curThresholdsCopy[i];
+                    bestThresholds[i] = curThresholdSignatureCopy[i];
                 }
                 bestSigma = sigma;
-            }
-#pragma omp critical
-            {
-                if (!incThresholds(curThresholds))
-                {
-                    running = false;
-                }
             }
         }
 
@@ -199,8 +218,6 @@ std::vector<int> otsuThreshold(const PnmImage& image, const int threshCount)
         }
     }
 
-    std::cout << "\n" << bestOverallIndex << " is the winner: " << bestOverallSigma << '\n';
-
     delete[] probability;
     delete[] omega;
     delete[] mu;
@@ -213,7 +230,6 @@ int main(const int argc, const char* argv[])
     //const std::string fileName = "woman";
     //const std::string path = argc > 2 ? argv[2] : "images/" + fileName + ".pnm";
     const std::string path = argc > 2 ? argv[2] : "itmo-comp-arch22-lab4-Ismaxis\\test_data\\in.pgm";
-    //const std::string path = argc > 2 ? argv[2] : "images/image1_mod.pnm";
     try
     {
         PnmImage image;
@@ -226,7 +242,7 @@ int main(const int argc, const char* argv[])
             const float tstart = omp_get_wtime();
 
             std::vector<int> thresholds;
-            thresholds = otsuThreshold(image, 4);
+            thresholds = otsuThreshold(image, 3);
 
             const float tend = omp_get_wtime();
             printf("%d Threads:\n\tTime (sec): %f\n", i, tend - tstart);
@@ -266,7 +282,6 @@ int main(const int argc, const char* argv[])
             //image.saveToFile("images/" + fileName + "_bin_new.pnm");
             copyOfImage.saveToFile(
                 "itmo-comp-arch22-lab4-Ismaxis\\test_data\\out_parallel_" + std::to_string(i) + ".pgm");
-            //image.saveToFile("images/image1_bin.pnm");
         }
         delete[] map;
     }
