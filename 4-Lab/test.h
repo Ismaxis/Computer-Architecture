@@ -3,9 +3,9 @@
 #include "otsuFuncs.h"
 #include "PnmImage.h"
 
-inline void threadsTest(const int thresholdsCount, const std::string& inputPath, const std::string& outputPath = "")
+inline void threadsTimeTest(const int thresholdsCount, const std::string& inputPath, const std::string& outputPath = "")
 {
-    std::cout << "ThreadsTEST\n";
+    std::cout << "ThreadsTEST\n\n";
 #ifdef _OPENMP
     std::cout << "OpenMP is active\n";
 #else
@@ -21,40 +21,17 @@ inline void threadsTest(const int thresholdsCount, const std::string& inputPath,
         for (int i = 1; i < 13; ++i)
         {
             omp_set_num_threads(i);
-            const double tstart = omp_get_wtime();
+            const double start = omp_get_wtime();
 
-            std::vector<int> thresholds = otsuThreshold(image, thresholdsCount);
+            std::vector<int> thresholds = calculateOtsuThresholds(image, thresholdsCount);
 
-            const double tend = omp_get_wtime();
-            printf("%d Threads:\n\tTime (sec): %lf\n", i, tend - tstart);
+            const double end = omp_get_wtime();
+            printf("%d Threads:\n\tTime (sec): %lf\n", i, end - start);
 
             if (outputPath != "")
             {
-                int cur = 0;
-                for (int i = 0; i < INTENSITY_LAYER_COUNT; ++i)
-                {
-                    if (cur == thresholds.size())
-                    {
-                        classes[i] = INTENSITY_LAYER_COUNT - 1;
-                    }
-                    else if (i >= thresholds[cur])
-                    {
-                        ++cur;
-                        --i;
-                    }
-                    else if (cur == 0)
-                    {
-                        classes[i] = thresholds[0] / 2;
-                    }
-                    else
-                    {
-                        classes[i] = (thresholds[cur] + thresholds[cur - 1]) / 2;
-                    }
-                }
-
                 PnmImage copyOfImage(image);
-                copyOfImage.applyThresholds(classes);
-
+                copyOfImage.applyThresholds(thresholds);
                 copyOfImage.saveToFile(outputPath + + "_" + std::to_string(i) + ".pnm");
             }
         }

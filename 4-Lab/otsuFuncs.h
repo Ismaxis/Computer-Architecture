@@ -4,8 +4,6 @@
 
 #include "PnmImage.h"
 
-constexpr int INTENSITY_LAYER_COUNT = 256;
-
 double* calculateProbabilities(const PnmImage& image);
 
 double* calculatePrefOmegas(const double* probability);
@@ -24,4 +22,4 @@ double getOmegaRange(const double* omega, const std::vector<int>& thresholds, in
 
 double getMuRange(const double* mu, const std::vector<int>& thresholds, int i);
 
-std::vector<int> otsuThreshold(const PnmImage& image, int thresholdsCount);
+std::vector<int> calculateOtsuThresholds(const PnmImage& image, int thresholdsCount);

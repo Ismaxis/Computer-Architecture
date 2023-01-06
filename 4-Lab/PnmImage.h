@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+constexpr int INTENSITY_LAYER_COUNT = 256;
+
 class PnmImage
 {
 private:
@@ -114,13 +116,41 @@ public:
         }
     }
 
-    void applyThresholds(const uint8_t* classes)
+    void applyThresholds(const std::vector<int>& thresholds)
     {
+        auto* classes = new uint8_t[INTENSITY_LAYER_COUNT];
+        fillClassesArray(classes, thresholds);
         for (int x = 0; x < getXSize(); ++x)
         {
             for (int y = 0; y < getYSize(); ++y)
             {
                 setPixel(classes[getPixel(x, y)], x, y);
+            }
+        }
+    }
+
+private:
+    static void fillClassesArray(uint8_t* classes, const std::vector<int>& thresholds)
+    {
+        int cur = 0;
+        for (int i = 0; i < INTENSITY_LAYER_COUNT; ++i)
+        {
+            if (cur == thresholds.size())
+            {
+                classes[i] = INTENSITY_LAYER_COUNT - 1;
+            }
+            else if (i >= thresholds[cur])
+            {
+                ++cur;
+                --i;
+            }
+            else if (cur == 0)
+            {
+                classes[i] = thresholds[0] / 2;
+            }
+            else
+            {
+                classes[i] = (thresholds[cur] + thresholds[cur - 1]) / 2;
             }
         }
     }

@@ -7,7 +7,7 @@ int main(const int argc, const char* argv[])
 {
     const std::string fileName = "woman";
     const std::string inputPath = argc > 2 ? argv[2] : "images/" + fileName + ".pnm";
-    threadsTest(3, inputPath);
+    threadsTimeTest(4, inputPath);
 
     return 0;
 }
