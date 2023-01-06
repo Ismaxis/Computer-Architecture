@@ -171,8 +171,8 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image, const int thresh
                 for (int i = 0; i <= thresholdsCount; ++i)
                 {
                     const double omegaRange = getOmegaRange(omega, curLocalThresholdSignature, i);
-                    const double muRange = getMuRange(mu, curLocalThresholdSignature, i) / omegaRange;
-                    sigma += muRange * muRange * omegaRange;
+                    const double muRange = getMuRange(mu, curLocalThresholdSignature, i);
+                    sigma += muRange * muRange / omegaRange;
                 }
                 if (sigma > bestSigma)
                 {
