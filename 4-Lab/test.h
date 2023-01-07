@@ -6,19 +6,18 @@
 inline std::vector<int> testImageThresholds(const int thresholdsCount, const std::string& inputPath,
                                             const std::string& outputPath = "")
 {
+    std::vector<int> thresholds;
     try
     {
         PnmImage image;
         image.loadFromFile(inputPath);
-        std::vector<int> thresholds = calculateOtsuThresholds(image, thresholdsCount);
+        thresholds = calculateOtsuThresholds(image, thresholdsCount);
         if (!outputPath.empty())
         {
             PnmImage copyOfImage(image);
             copyOfImage.applyThresholds(thresholds);
             copyOfImage.saveToFile(outputPath);
         }
-
-        return thresholds;
     }
     catch (std::ios_base::failure& e)
     {
@@ -28,31 +27,31 @@ inline std::vector<int> testImageThresholds(const int thresholdsCount, const std
     {
         std::cout << "RuntimeError in threads test: " << e.what() << std::endl;
     }
+
+    return thresholds;
 }
 
-inline void threadsTimeTest(const int thresholdsCount, const std::string& inputPath, const std::string& outputPath = "")
+inline double threadsTimeTest(const int thresholdsCount, const int threadsCount, const std::string& inputPath,
+                              const std::string& outputPath = "")
 {
-    std::cout << "ThreadsTEST\n\n";
-#ifdef _OPENMP
-    std::cout << "OpenMP is active\n";
-#else
-    std::cout << "OpenMP is disabled\n";
-#endif
-
+    double sum = 0.0;
+    constexpr int iterations = 5;
     try
     {
         PnmImage image;
         image.loadFromFile(inputPath);
 
-        for (int i = 1; i < 13; ++i)
+        omp_set_num_threads(threadsCount);
+        calculateOtsuThresholds(image, thresholdsCount);
+        for (int i = 0; i < iterations; ++i)
         {
-            omp_set_num_threads(i);
             const double start = omp_get_wtime();
 
             std::vector<int> thresholds = calculateOtsuThresholds(image, thresholdsCount);
 
             const double end = omp_get_wtime();
-            printf("%d Threads:\n\tTime (sec): %lf\n", i, end - start);
+
+            sum += end - start;
 
             if (outputPath != "")
             {
@@ -70,4 +69,6 @@ inline void threadsTimeTest(const int thresholdsCount, const std::string& inputP
     {
         std::cout << "RuntimeError in threads test: " << e.what() << std::endl;
     }
+
+    return sum / iterations;
 }

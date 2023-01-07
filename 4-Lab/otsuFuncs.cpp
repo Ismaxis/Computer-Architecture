@@ -130,9 +130,7 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image, const int thresh
 
     // Mu's calculations
     const auto* mu = calculatePrefMus(probability);
-
-    // Calculation best thresholds
-
+    
     // Global highest digit counter
     int curHighestDigit = 0;
 
