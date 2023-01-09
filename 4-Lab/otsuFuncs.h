@@ -1,7 +1,8 @@
 ﻿#pragma once
 #include <omp.h>
 #include <iostream>
-
+#include <cstring>
+#include <cmath>
 #include "PnmImage.h"
 
 double* calculateProbabilities(const PnmImage& image);

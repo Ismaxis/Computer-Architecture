@@ -72,12 +72,7 @@ double getOmegaRange(const double* omega, const std::vector<int>& thresholds, co
 double getMuRange(const double* mu, const std::vector<int>& thresholds, const int i)
 {
     const double left = i > 0 ? mu[thresholds[i - 1]] : 0.0;
-    if (i < thresholds.size())
-    {
-        const double right = mu[thresholds[i] - 1];
-        return right - left;
-    }
-    const double right = mu[INTENSITY_LAYER_COUNT - 1];
+    const double right = i < thresholds.size() ? mu[thresholds[i] - 1] : mu[INTENSITY_LAYER_COUNT - 1];
     return right - left;
 }
 

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cmath>
 
 constexpr int INTENSITY_LAYER_COUNT = 256;
 
