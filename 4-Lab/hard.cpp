@@ -3,18 +3,25 @@
 #include "otsuFuncs.h"
 #include "test.h"
 
-int THRESHOLDS_COUNT = 3;
 
 int main(const int argc, const char* argv[])
 {
+    std::string threadsCountStr;
+    std::string in;
+    std::string out;
     if (argc < 4)
     {
         std::cout << "3 arguments expected, " + std::to_string(argc - 1) + " found\n";
+        std::cin >> threadsCountStr;
+        std::cin >> in;
+        std::cin >> out;
     }
-
-    const std::string threadsCountStr = argv[1];
-    const std::string in = argv[2];
-    const std::string out = argv[3];
+    else
+    {
+        threadsCountStr = argv[1];
+        in = argv[2];
+        out = argv[3];
+    }
 
     int threadsCount;
     try
@@ -39,7 +46,7 @@ int main(const int argc, const char* argv[])
         image.loadFromFile(in);
 
         omp_set_num_threads(threadsCount);
-        const std::vector<int> thresholds = calculateOtsuThresholds(image, THRESHOLDS_COUNT);
+        const std::vector<int> thresholds = calculateOtsuThresholds(image);
         printf("%u %u %u\n", thresholds[0], thresholds[1], thresholds[2]);
         image.applyThresholds(thresholds);
 

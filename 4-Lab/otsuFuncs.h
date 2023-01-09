@@ -21,4 +21,4 @@ double getOmegaRange(const double* probability, const std::vector<int>& threshol
 
 double getMuRange(const double* mu, const std::vector<int>& thresholds, int i);
 
-std::vector<int> calculateOtsuThresholds(const PnmImage& image, int thresholdsCount);
+std::vector<int> calculateOtsuThresholds(const PnmImage& image);

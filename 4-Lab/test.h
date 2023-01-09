@@ -11,7 +11,7 @@ inline std::vector<int> testImageThresholds(const int thresholdsCount, const std
     {
         PnmImage image;
         image.loadFromFile(inputPath);
-        thresholds = calculateOtsuThresholds(image, thresholdsCount);
+        thresholds = calculateOtsuThresholds(image);
         if (!outputPath.empty())
         {
             PnmImage copyOfImage(image);
@@ -42,12 +42,12 @@ inline double threadsTimeTest(const int thresholdsCount, const int threadsCount,
         image.loadFromFile(inputPath);
 
         omp_set_num_threads(threadsCount);
-        calculateOtsuThresholds(image, thresholdsCount);
+        calculateOtsuThresholds(image);
         for (int i = 0; i < iterations; ++i)
         {
             const double start = omp_get_wtime();
 
-            std::vector<int> thresholds = calculateOtsuThresholds(image, thresholdsCount);
+            std::vector<int> thresholds = calculateOtsuThresholds(image);
 
             const double end = omp_get_wtime();
 
