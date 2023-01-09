@@ -3,43 +3,47 @@
 #include "otsuFuncs.h"
 #include "test.h"
 
-constexpr int THRESHOLDS_COUNT = 5;
+int THRESHOLDS_COUNT = 3;
 
 int main(const int argc, const char* argv[])
 {
-    if (argc < 2)
+    if (argc < 4)
     {
-        std::cout << "2 arguments expected, " + std::to_string(argc - 1) + " found\n";
-        return 0;
+        std::cout << "3 arguments expected, " + std::to_string(argc - 1) + " found\n";
     }
+
+    const std::string threadsCountStr = argv[1];
+    const std::string in = argv[2];
+    const std::string out = argv[3];
 
     int threadsCount;
     try
     {
-        threadsCount = std::stoi(argv[1]);
+        threadsCount = std::stoi(threadsCountStr);
         if (threadsCount < 1)
         {
-            std::cout << "Thread count " + std::string(argv[1]) + " is invalid.\nIt should be greater then zero.\n";
+            std::cout << "Thread count " + std::string(threadsCountStr) +
+                " is invalid.\nIt should be greater then zero.\n";
             return 0;
         }
     }
     catch (std::invalid_argument& e)
     {
-        std::cout << e.what() << ": " << std::string(argv[1]) << std::endl;
+        std::cout << e.what() << ": " << std::string(threadsCountStr) << std::endl;
         return 0;
     }
 
     try
     {
         PnmImage image;
-        image.loadFromFile(argv[2]);
+        image.loadFromFile(in);
 
         const std::vector<int> thresholds = calculateOtsuThresholds(image, THRESHOLDS_COUNT);
 
         omp_set_num_threads(threadsCount);
         image.applyThresholds(thresholds);
 
-        image.saveToFile(argv[3]);
+        image.saveToFile(out);
     }
     catch (std::ios_base::failure& e)
     {
@@ -49,6 +53,6 @@ int main(const int argc, const char* argv[])
     {
         std::cout << "RuntimeError: " << e.what() << std::endl;
     }
-  
+
     return 0;
 }
