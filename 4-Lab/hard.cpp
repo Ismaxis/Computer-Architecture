@@ -38,9 +38,9 @@ int main(const int argc, const char* argv[])
         PnmImage image;
         image.loadFromFile(in);
 
-        const std::vector<int> thresholds = calculateOtsuThresholds(image, THRESHOLDS_COUNT);
-
         omp_set_num_threads(threadsCount);
+        const std::vector<int> thresholds = calculateOtsuThresholds(image, THRESHOLDS_COUNT);
+        printf("%u %u %u\n", thresholds[0], thresholds[1], thresholds[2]);
         image.applyThresholds(thresholds);
 
         image.saveToFile(out);

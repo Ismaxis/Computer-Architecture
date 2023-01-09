@@ -141,14 +141,12 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image, const int thresh
         {
 #pragma omp critical
             {
-                if (curHighestDigit + thresholdsCount >= INTENSITY_LAYER_COUNT)
-                {
-                    isRunning = false;
-                }
-                else
-                {
-                    curLocalHighestDigit = curHighestDigit++;
-                }
+                curLocalHighestDigit = curHighestDigit++;
+            }
+
+            if (curHighestDigit + thresholdsCount >= INTENSITY_LAYER_COUNT)
+            {
+                isRunning = false;
             }
 
             if (!isRunning)
@@ -157,6 +155,7 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image, const int thresh
             }
 
             generateFirstThresholdSignature(curLocalThresholdSignature, curLocalHighestDigit);
+            
             while (curLocalThresholdSignature[0] == curLocalHighestDigit)
             {
                 updateToNextThresholdSignature(curLocalThresholdSignature);
@@ -164,8 +163,20 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image, const int thresh
                 for (int i = 0; i <= thresholdsCount; ++i)
                 {
                     const double omegaRange = getOmegaRange(omega, curLocalThresholdSignature, i);
-                    const double muRange = getMuRange(mu, curLocalThresholdSignature, i);
-                    sigma += muRange * muRange / omegaRange;
+                    const double muRange = getMuRange(mu, curLocalThresholdSignature, i) / omegaRange;
+                    sigma += muRange * muRange * omegaRange;
+                }
+                if (curLocalThresholdSignature[0] == 66 && curLocalThresholdSignature[1] == 122 &&
+                    curLocalThresholdSignature[2] == 179)
+                {
+#pragma omp critical
+                    std::cout << "66\n" << bestSigma << " : " << sigma << '\n';
+                }
+                else if (curLocalThresholdSignature[0] == 55 && curLocalThresholdSignature[1] == 99 &&
+                    curLocalThresholdSignature[2] == 159)
+                {
+#pragma omp critical
+                    std::cout << "55\n" << bestSigma << " : " << sigma << '\n';
                 }
                 if (sigma > bestSigma)
                 {
