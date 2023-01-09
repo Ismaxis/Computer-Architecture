@@ -7,18 +7,12 @@
 
 double* calculateProbabilities(const PnmImage& image);
 
-double* calculateOmegas(const double* probability);
+double* calculatePrefOmegas(const double* probability);
 
-double* calculateMus(const double* probabilities);
+double* calculatePrefMus(const double* probability);
 
-void incDigit(std::vector<int>& thresholds, int digitIndexToInc);
+double getPrefOmegaRange(const double* omega, int left, int right);
 
-bool isFinished(const std::vector<int>& thresholds);
-
-void updateToNextThresholdSignature(std::vector<int>& thresholds);
-
-double getOmegaRange(const double* probability, const std::vector<int>& thresholds, int i);
-
-double getMuRange(const double* mu, const std::vector<int>& thresholds, int i);
+double getPrefMuRange(const double* mu, int left, int right);
 
 std::vector<int> calculateOtsuThresholds(const PnmImage& image);

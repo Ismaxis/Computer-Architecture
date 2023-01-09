@@ -36,80 +36,36 @@ double* calculateOmegas(const double* probability)
     return omega;
 }
 
-double* calculateMus(const double* probabilities)
+double* calculatePrefMus(const double* probability)
 {
     auto* mu = new double[INTENSITY_LAYER_COUNT];
-    mu[0] = 0;
+    mu[0] = 0.0;
     for (int i = 1; i < INTENSITY_LAYER_COUNT; ++i)
     {
-        mu[i] = i * probabilities[i];
+        mu[i] = mu[i - 1] + i * probability[i];
     }
 
     return mu;
 }
 
-double getOmegaRange(const double* probability, const std::vector<int>& thresholds, const int i)
+double getPrefOmegaRange(const double* omega, const int left, const int right)
 {
-    const int left = i > 0 ? thresholds[i - 1] : 0.0;
-    const int right = i < thresholds.size() ? thresholds[i] : INTENSITY_LAYER_COUNT - 1;
-    double res = 0.0;
-    for (int j = left; j < right; ++j)
-    {
-        res += probability[j];
-    }
-
-    return res;
+    return omega[right] - (left >= 0 ? omega[left] : 0.0);
 }
 
-double getMuRange(const double* mu, const std::vector<int>& thresholds, const int i)
+double getMuRange(const double* mu, const int left, const int right)
 {
-    const int left = i > 0 ? thresholds[i - 1] : 0.0;
-    const int right = i < thresholds.size() ? thresholds[i] : INTENSITY_LAYER_COUNT - 1;
     double res = 0.0;
-    for (int j = left; j < right; ++j)
+    for (int j = left + 1; j <= right; ++j)
     {
         res += mu[j];
     }
     return res;
 }
 
-void incDigit(std::vector<int>& thresholds, const int digitIndexToInc)
+double getPrefMuRange(const double* mu, const int left, const int right)
 {
-    if (thresholds[digitIndexToInc] >= INTENSITY_LAYER_COUNT - (thresholds.size() - digitIndexToInc))
-    {
-        incDigit(thresholds, digitIndexToInc - 1);
-        thresholds[digitIndexToInc] = thresholds[digitIndexToInc - 1] + 1;
-    }
-    else
-    {
-        ++thresholds[digitIndexToInc];
-    }
-}
-
-void generateFirstThresholdSignature(std::vector<int>& thresholds, int highestDigit)
-{
-    for (int& threshold : thresholds)
-    {
-        threshold = highestDigit++;
-    }
-}
-
-bool isFinished(const std::vector<int>& thresholds)
-{
-    return thresholds[0] + thresholds.size() >= INTENSITY_LAYER_COUNT;
-}
-
-void updateToNextThresholdSignature(std::vector<int>& thresholds)
-{
-    const int lastDigitIndex = thresholds.size() - 1;
-    if (thresholds[lastDigitIndex] < INTENSITY_LAYER_COUNT - 1)
-    {
-        ++thresholds[lastDigitIndex];
-    }
-    else
-    {
-        incDigit(thresholds, lastDigitIndex);
-    }
+    return mu[right] - (left >= 0 ? mu[left] : 0.0);
 }
 
 std::vector<int> calculateOtsuThresholds(const PnmImage& image)
@@ -118,10 +74,10 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image)
     const auto* probability = calculateProbabilities(image);
 
     // Omega's calculations
-    const auto* omega = calculateOmegas(probability);
+    const auto* prefOmega = calculateOmegas(probability);
 
     // Mu's calculations
-    const auto* mu = calculateMus(probability);
+    const auto* prefMu = calculatePrefMus(probability);
 
     std::vector<std::pair<double, std::vector<int>>> results;
 
@@ -130,19 +86,30 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image)
         double bestSigma = 0.0;
         std::vector<int> localBestThresholds(3);
 #pragma omp for
-        for (int i = 0; i < INTENSITY_LAYER_COUNT - 3; ++i)
+        for (int i = 1; i < INTENSITY_LAYER_COUNT - 3; ++i)
         {
-            for (int j = 0; j < INTENSITY_LAYER_COUNT - 2; ++j)
+            for (int j = i + 1; j < INTENSITY_LAYER_COUNT - 2; ++j)
             {
-                for (int k = 0; k < INTENSITY_LAYER_COUNT - 1; ++k)
+                for (int k = j + 1; k < INTENSITY_LAYER_COUNT - 1; ++k)
                 {
                     double sigma = 0.0;
-                    for (int l = 0; l <= 3; ++l)
-                    {
-                        const double omegaRange = getOmegaRange(probability, {i, j, k}, l);
-                        const double muRange = getMuRange(mu, {i, j, k}, l);
-                        sigma += muRange * muRange / omegaRange;
-                    }
+
+                    double omegaRange = getPrefOmegaRange(prefOmega, -1, i);
+                    double muRange = getPrefMuRange(prefMu, -1, i);
+                    sigma += muRange * muRange / omegaRange;
+
+                    omegaRange = getPrefOmegaRange(prefOmega, i, j);
+                    muRange = getPrefMuRange(prefMu, i, j);
+                    sigma += muRange * muRange / omegaRange;
+
+                    omegaRange = getPrefOmegaRange(prefOmega, j, k);
+                    muRange = getPrefMuRange(prefMu, j, k);
+                    sigma += muRange * muRange / omegaRange;
+
+                    omegaRange = getPrefOmegaRange(prefOmega, k, INTENSITY_LAYER_COUNT - 1);
+                    muRange = getPrefMuRange(prefMu, k, INTENSITY_LAYER_COUNT - 1);
+                    sigma += muRange * muRange / omegaRange;
+                    
                     if (sigma > bestSigma)
                     {
                         localBestThresholds[0] = i;
@@ -174,8 +141,8 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image)
     }
 
     delete[] probability;
-    delete[] omega;
-    delete[] mu;
+    delete[] prefOmega;
+    delete[] prefMu;
 
     return results[bestOverallIndex].second;
 }
