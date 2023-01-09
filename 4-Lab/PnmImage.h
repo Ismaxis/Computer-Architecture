@@ -133,26 +133,24 @@ public:
 private:
     static void fillClassesArray(uint8_t* classes, const std::vector<int>& thresholds)
     {
-        int cur = 0;
-        for (int i = 0; i < INTENSITY_LAYER_COUNT; ++i)
+        for (int i = 0; i <= thresholds[0]; ++i)
         {
-            if (cur == thresholds.size())
-            {
-                classes[i] = INTENSITY_LAYER_COUNT - 1;
-            }
-            else if (i >= thresholds[cur])
-            {
-                ++cur;
-                --i;
-            }
-            else if (cur == 0)
-            {
-                classes[i] = thresholds[0] / 2;
-            }
-            else
-            {
-                classes[i] = (thresholds[cur] + thresholds[cur - 1]) / 2;
-            }
+            classes[i] = 0;
+        }
+
+        for (int i = thresholds[0] + 1; i <= thresholds[1]; ++i)
+        {
+            classes[i] = 84;
+        }
+
+        for (int i = thresholds[1] + 1; i <= thresholds[2]; ++i)
+        {
+            classes[i] = 170;
+        }
+
+        for (int i = thresholds[2] + 1; i <= INTENSITY_LAYER_COUNT - 1; ++i)
+        {
+            classes[i] = 255;
         }
     }
 };

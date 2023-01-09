@@ -23,7 +23,7 @@ double* calculateProbabilities(const PnmImage& image)
     return probability;
 }
 
-double* calculateOmegas(const double* probability)
+double* calculatePrefOmegas(const double* probability)
 {
     auto* omega = new double[INTENSITY_LAYER_COUNT];
     omega[0] = probability[0];
@@ -53,16 +53,6 @@ double getPrefOmegaRange(const double* omega, const int left, const int right)
     return omega[right] - (left >= 0 ? omega[left] : 0.0);
 }
 
-double getMuRange(const double* mu, const int left, const int right)
-{
-    double res = 0.0;
-    for (int j = left + 1; j <= right; ++j)
-    {
-        res += mu[j];
-    }
-    return res;
-}
-
 double getPrefMuRange(const double* mu, const int left, const int right)
 {
     return mu[right] - (left >= 0 ? mu[left] : 0.0);
@@ -74,7 +64,7 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image)
     const auto* probability = calculateProbabilities(image);
 
     // Omega's calculations
-    const auto* prefOmega = calculateOmegas(probability);
+    const auto* prefOmega = calculatePrefOmegas(probability);
 
     // Mu's calculations
     const auto* prefMu = calculatePrefMus(probability);
