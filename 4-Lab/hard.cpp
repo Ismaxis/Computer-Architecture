@@ -46,10 +46,15 @@ int main(const int argc, const char* argv[])
         image.loadFromFile(in);
 
         omp_set_num_threads(threadsCount);
-        const std::vector<int> thresholds = calculateOtsuThresholds(image);
-        printf("%u %u %u\n", thresholds[0], thresholds[1], thresholds[2]);
-        image.applyThresholds(thresholds);
 
+        const double start = omp_get_wtime();
+        const std::vector<int> thresholds = calculateOtsuThresholds(image);
+        const double end = omp_get_wtime();
+
+        printf("Time (%i thread(s)): %g ms\n", threadsCount, end - start);
+        printf("%u %u %u\n", thresholds[0], thresholds[1], thresholds[2]);
+
+        image.applyThresholds(thresholds);
         image.saveToFile(out);
     }
     catch (std::ios_base::failure& e)
