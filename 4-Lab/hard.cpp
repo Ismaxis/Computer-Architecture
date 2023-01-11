@@ -4,20 +4,15 @@
 
 int main(const int argc, const char* argv[])
 {
-    std::string threadsCountStr;
-    std::string in;
-    std::string out;
     if (argc < 4)
     {
         std::cout << "3 arguments expected, " + std::to_string(argc - 1) + " found\n";
         return 0;
     }
-    else
-    {
-        threadsCountStr = argv[1];
-        in = argv[2];
-        out = argv[3];
-    }
+
+    const std::string threadsCountStr = argv[1];
+    const std::string in = argv[2];
+    const std::string out = argv[3];
 
     int threadsCount;
     try
@@ -46,15 +41,16 @@ int main(const int argc, const char* argv[])
             omp_set_num_threads(threadsCount);
         }
 
+        const bool isOmpEnabled = threadsCount != -1;
         const double start = omp_get_wtime();
-        const std::vector<int> thresholds = calculateOtsuThresholds(image, threadsCount != -1);
+        const std::vector<int> thresholds = calculateOtsuThresholds(image, isOmpEnabled);
+        image.applyThresholds(thresholds, isOmpEnabled);
         const double end = omp_get_wtime();
 
         printf("Time (%i thread(s)): %g ms\n", threadsCount == 0 ? omp_get_max_threads() : threadsCount,
                (end - start) * 1000);
         printf("%u %u %u\n", thresholds[0], thresholds[1], thresholds[2]);
 
-        image.applyThresholds(thresholds);
         image.saveToFile(out);
     }
     catch (std::ios_base::failure& e)

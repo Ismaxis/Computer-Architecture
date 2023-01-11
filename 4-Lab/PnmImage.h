@@ -1,9 +1,7 @@
 #pragma once
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <vector>
-#include <cmath>
 
 constexpr int INTENSITY_LAYER_COUNT = 256;
 
@@ -13,6 +11,7 @@ private:
     int sizeX = 0;
     int sizeY = 0;
     std::vector<std::vector<uint8_t>> storage;
+
 public:
     int getXSize() const
     {
@@ -92,17 +91,15 @@ public:
         storage.clear();
         storage.resize(sizeY);
 
-        auto* buff = new uint8_t[sizeX * sizeY];
-        input.read((char*)buff, sizeX * sizeY);
-
         for (int y = 0; y < sizeY; ++y)
         {
             for (int x = 0; x < sizeX; ++x)
             {
-                storage.at(y).push_back(buff[sizeY * y + x]);
+                uint8_t uintBuff = 0;
+                input.read((char*)&uintBuff, sizeof(uint8_t));
+                storage.at(y).push_back(uintBuff); 
             }
         }
-        delete[] buff;
     }
 
     void saveToFile(const std::string& path) const
@@ -115,30 +112,29 @@ public:
         }
         const std::string headerStr = "P5\n" + std::to_string(sizeX) + " " + std::to_string(sizeY) + "\n255\n";
         output.write(headerStr.c_str(), headerStr.size());
-        
 
-        auto* buff = new uint8_t[sizeX * sizeY];
         for (int y = 0; y < sizeY; ++y)
         {
             for (int x = 0; x < sizeX; ++x)
             {
-                buff[y * sizeY + x] = storage.at(y).at(x);
+                output.write((char*)&storage.at(y).at(x), sizeof(uint8_t)); 
             }
         }
-
-        output.write((char*)buff, sizeX * sizeY);
-        delete[] buff;
     }
 
-    void applyThresholds(const std::vector<int>& thresholds)
+    void applyThresholds(const std::vector<int>& thresholds, bool ompEnabled)
     {
         auto* classes = new uint8_t[INTENSITY_LAYER_COUNT];
         fillClassesArray(classes, thresholds);
-        for (int x = 0; x < getXSize(); ++x)
+#pragma omp parallel if (ompEnabled)
         {
-            for (int y = 0; y < getYSize(); ++y)
+#pragma omp for
+            for (int x = 0; x < getXSize(); ++x)
             {
-                setPixel(classes[getPixel(x, y)], x, y);
+                for (int y = 0; y < getYSize(); ++y)
+                {
+                    setPixel(classes[getPixel(x, y)], x, y);
+                }
             }
         }
     }

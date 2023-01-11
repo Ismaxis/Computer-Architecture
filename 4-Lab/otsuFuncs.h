@@ -1,11 +1,11 @@
 ﻿#pragma once
 #include <omp.h>
-#include <iostream>
+#include <fstream>
 #include <cstring>
-#include <cmath>
+#include <vector>
 #include "PnmImage.h"
 
-double* calculateProbabilities(const PnmImage& image);
+double* calculateProbabilities(const PnmImage& image, bool ompEnabled = true);
 
 double* calculatePrefOmegas(const double* probability);
 

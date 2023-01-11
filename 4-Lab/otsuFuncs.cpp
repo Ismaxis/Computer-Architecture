@@ -1,14 +1,18 @@
 #include "otsuFuncs.h"
 
-double* calculateProbabilities(const PnmImage& image)
+double* calculateProbabilities(const PnmImage& image, const bool ompEnabled)
 {
     auto* probability = new double[INTENSITY_LAYER_COUNT];
     memset(probability, 0.0, INTENSITY_LAYER_COUNT * sizeof(double));
-    for (int x = 0; x < image.getXSize(); ++x)
+#pragma omp parallel if (ompEnabled)
     {
-        for (int y = 0; y < image.getYSize(); ++y)
+#pragma omp for
+        for (int x = 0; x < image.getXSize(); ++x)
         {
-            ++probability[image.getPixel(x, y)];
+            for (int y = 0; y < image.getYSize(); ++y)
+            {
+                ++probability[image.getPixel(x, y)];
+            }
         }
     }
 
@@ -55,21 +59,21 @@ double getPrefMuRange(const double* mu, const int left, const int right)
     return mu[right] - (left >= 0 ? mu[left] : 0.0);
 }
 
-double calculateSigmaForClass(const double* prefOmega, const double* prefMu, int left, int right)
+double calculateSigmaForClass(const double* prefOmega, const double* prefMu, const int left, const int right)
 {
     const double omegaRange = getPrefOmegaRange(prefOmega, left, right);
     const double muRange = getPrefMuRange(prefMu, left, right);
     return muRange * muRange / omegaRange;
 }
 
-std::vector<int> calculateOtsuThresholds(const PnmImage& image, bool ompEnabled)
+std::vector<int> calculateOtsuThresholds(const PnmImage& image, const bool ompEnabled)
 {
-    const auto* probability = calculateProbabilities(image);
+    const auto* probability = calculateProbabilities(image, ompEnabled);
     const auto* prefOmega = calculatePrefOmegas(probability);
     const auto* prefMu = calculatePrefMus(probability);
 
     std::vector<std::pair<double, std::vector<int>>> results;
-#pragma omp parallel if (ompEnabled)
+#pragma omp parallel if (ompEnabled) default(none) shared(prefOmega, prefMu, results)
     {
         double localBestSigma = 0.0;
         std::vector<int> localBestThresholds(3);
@@ -85,7 +89,6 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image, bool ompEnabled)
                     const double thirdClassSigma = calculateSigmaForClass(prefOmega, prefMu, j, k);
                     const double fourthClassSigma = calculateSigmaForClass(
                         prefOmega, prefMu, k, INTENSITY_LAYER_COUNT - 1);
-
 
                     const double curSigma = firstClassSigma + secondClassSigma + thirdClassSigma + fourthClassSigma;
                     if (curSigma > localBestSigma)
