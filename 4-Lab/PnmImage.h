@@ -122,16 +122,16 @@ public:
         }
     }
 
-    void applyThresholds(const std::vector<int>& thresholds, bool ompEnabled)
+    void applyThresholds(const std::vector<int>& thresholds, const bool ompEnabled = true, const int chunkSize = 1)
     {
         auto* classes = new uint8_t[INTENSITY_LAYER_COUNT];
         fillClassesArray(classes, thresholds);
 #pragma omp parallel if (ompEnabled)
         {
-#pragma omp for
-            for (int x = 0; x < getXSize(); ++x)
+#pragma omp for schedule(static)
+            for (int y = 0; y < getYSize(); ++y)
             {
-                for (int y = 0; y < getYSize(); ++y)
+                for (int x = 0; x < getXSize(); ++x)
                 {
                     setPixel(classes[getPixel(x, y)], x, y);
                 }

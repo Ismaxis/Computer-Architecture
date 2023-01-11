@@ -1,18 +1,25 @@
 #include "otsuFuncs.h"
 
-double* calculateProbabilities(const PnmImage& image, const bool ompEnabled)
+double* calculateProbabilities(const PnmImage& image, const bool ompEnabled, const int chunkSize)
 {
     auto* probability = new double[INTENSITY_LAYER_COUNT];
-    memset(probability, 0.0, INTENSITY_LAYER_COUNT * sizeof(double));
-#pragma omp parallel if (ompEnabled)
+    memset(probability, 0.0, INTENSITY_LAYER_COUNT * sizeof(double)); 
+#pragma omp parallel if (ompEnabled) default(none) shared(probability, chunkSize)
     {
-#pragma omp for
-        for (int x = 0; x < image.getXSize(); ++x)
+        auto* localProbability = new double[INTENSITY_LAYER_COUNT];
+        memset(localProbability, 0.0, INTENSITY_LAYER_COUNT * sizeof(double));
+#pragma omp for schedule(static)
+        for (int y = 0; y < image.getYSize(); ++y)
         {
-            for (int y = 0; y < image.getYSize(); ++y)
+            for (int x = 0; x < image.getXSize(); ++x)
             {
-                ++probability[image.getPixel(x, y)];
+                ++localProbability[image.getPixel(x, y)];
             }
+        }
+        for (int i = 0; i < INTENSITY_LAYER_COUNT; ++i)
+        {
+#pragma omp atomic
+            probability[i] += localProbability[i];
         }
     }
 
@@ -66,18 +73,30 @@ double calculateSigmaForClass(const double* prefOmega, const double* prefMu, con
     return muRange * muRange / omegaRange;
 }
 
-std::vector<int> calculateOtsuThresholds(const PnmImage& image, const bool ompEnabled)
+std::vector<int> calculateOtsuThresholds(const PnmImage& image, const bool ompEnabled, const int chunkSize)
 {
-    const auto* probability = calculateProbabilities(image, ompEnabled);
+    double start = omp_get_wtime();
+    const auto* probability = calculateProbabilities(image, ompEnabled, chunkSize);
+    double end = omp_get_wtime();
+    printf("Probability %g ms\n", (end - start) * 1000);
+
+    start = omp_get_wtime();
     const auto* prefOmega = calculatePrefOmegas(probability);
+    end = omp_get_wtime();
+    printf("prefOmega %g ms\n", (end - start) * 1000);
+
+    start = omp_get_wtime();
     const auto* prefMu = calculatePrefMus(probability);
+    end = omp_get_wtime();
+    printf("prefMu %g ms\n", (end - start) * 1000);
+
 
     std::vector<std::pair<double, std::vector<int>>> results;
-#pragma omp parallel if (ompEnabled) default(none) shared(prefOmega, prefMu, results)
+#pragma omp parallel if (ompEnabled) default(none) shared(prefOmega, prefMu, results, chunkSize)
     {
         double localBestSigma = 0.0;
         std::vector<int> localBestThresholds(3);
-#pragma omp for
+#pragma omp for schedule(dynamic)
         for (int i = 1; i < INTENSITY_LAYER_COUNT - 3; ++i)
         {
             const double firstClassSigma = calculateSigmaForClass(prefOmega, prefMu, -1, i);
