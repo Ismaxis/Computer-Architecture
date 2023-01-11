@@ -1,8 +1,6 @@
 #include <iostream>
 
 #include "otsuFuncs.h"
-#include "test.h"
-
 
 int main(const int argc, const char* argv[])
 {
