@@ -47,36 +47,44 @@ public:
         input >> type;
         if (type != "P5")
         {
-            throw std::runtime_error("Unknown File type: '" + type + "'");
-        }
-        char buff;
-        input.read(&buff, 1);
-        input.read(&buff, 1);
-        while (buff != ' ')
-        {
-            sizeX *= 10;
-            sizeX += buff - '0';
-            input.read(&buff, 1);
-        }
-        input.read(&buff, 1);
-        while (buff != '\n')
-        {
-            sizeY *= 10;
-            sizeY += buff - '0';
-            input.read(&buff, 1);
+            const std::string message = "Unknown File type: '" + type + "'";
+            throw std::runtime_error(message);
         }
 
-        int huesCount = 0;
-        input.read(&buff, 1);
-        while (buff != '\n')
+        std::string width;
+        input >> width;
+
+        std::string height;
+        input >> height;
+
+        int huesCount;
+        std::string huesCountStr;
+        input >> huesCountStr;
+        try
         {
-            huesCount *= 10;
-            huesCount += buff - '0';
-            input.read(&buff, 1);
+            sizeX = std::stoi(width);
+            sizeY = std::stoi(height);
+            huesCount = std::stoi(huesCountStr);
         }
+        catch (std::invalid_argument& e)
+        {
+            const std::string message = "Width, Height and hues count should be numbers:\n\tWidth: " + width +
+                "\n\tHeight: " + height +
+                "\n\tHues Count: " + huesCountStr;
+            throw std::runtime_error(message);            
+        }
+
+        if (sizeX <= 0 || sizeY <= 0)
+        {
+            throw std::runtime_error("Width and Height should be positive:\n\tWidth: " + width +
+                "\n\tHeight: " + height);
+        }
+        
         if (huesCount != 255)
         {
-            throw std::runtime_error("Invalid count of hues: '" + std::to_string(huesCount) + "'");
+            throw std::runtime_error(
+                "Invalid count of hues: '" + huesCountStr + "'\nExpected: '" + std::to_string(
+                    INTENSITY_LAYER_COUNT - 1) + "'");
         }
 
         storage.clear();
@@ -86,7 +94,7 @@ public:
             for (int x = 0; x < sizeX; ++x)
             {
                 uint8_t uintBuff = 0;
-                input.read((char*)&uintBuff, 1);
+                input.read((char*)&uintBuff, sizeof(uint8_t));
                 storage.at(y).push_back(uintBuff);
             }
         }

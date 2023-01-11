@@ -12,9 +12,7 @@ int main(const int argc, const char* argv[])
     if (argc < 4)
     {
         std::cout << "3 arguments expected, " + std::to_string(argc - 1) + " found\n";
-        std::cin >> threadsCountStr;
-        std::cin >> in;
-        std::cin >> out;
+        return 0;
     }
     else
     {
@@ -27,16 +25,16 @@ int main(const int argc, const char* argv[])
     try
     {
         threadsCount = std::stoi(threadsCountStr);
-        if (threadsCount < 1)
+        if (threadsCount < -1)
         {
-            std::cout << "Thread count " + std::string(threadsCountStr) +
-                " is invalid.\nIt should be greater then zero.\n";
+            std::cout << "Threads count " + std::string(threadsCountStr) +
+                " is invalid.\nValid values:\n\t0: Default number of threads\n      >0: Given number of threads\n       -1: Disable OpenMP (SingleThread)\n";
             return 0;
         }
     }
     catch (std::invalid_argument& e)
     {
-        std::cout << e.what() << ": " << std::string(threadsCountStr) << std::endl;
+        std::cout << "Threads count should be a number: " << std::string(threadsCountStr) << std::endl;
         return 0;
     }
 
@@ -45,13 +43,17 @@ int main(const int argc, const char* argv[])
         PnmImage image;
         image.loadFromFile(in);
 
-        omp_set_num_threads(threadsCount);
+        if (threadsCount > 0)
+        {
+            omp_set_num_threads(threadsCount);
+        }
 
         const double start = omp_get_wtime();
-        const std::vector<int> thresholds = calculateOtsuThresholds(image);
+        const std::vector<int> thresholds = calculateOtsuThresholds(image, threadsCount != -1);
         const double end = omp_get_wtime();
 
-        printf("Time (%i thread(s)): %g ms\n", threadsCount, end - start);
+        printf("Time (%i thread(s)): %g ms\n", threadsCount == 0 ? omp_get_max_threads() : threadsCount,
+               (end - start) * 1000);
         printf("%u %u %u\n", thresholds[0], thresholds[1], thresholds[2]);
 
         image.applyThresholds(thresholds);
@@ -59,11 +61,11 @@ int main(const int argc, const char* argv[])
     }
     catch (std::ios_base::failure& e)
     {
-        std::cout << "IOError: " << e.what() << std::endl;
+        std::cout << e.what() << std::endl;
     }
     catch (std::runtime_error& e)
     {
-        std::cout << "RuntimeError: " << e.what() << std::endl;
+        std::cout << e.what() << std::endl;
     }
 
     return 0;

@@ -147,7 +147,6 @@
   <ItemGroup>
     <ClCompile Include="hard.cpp" />
     <ClCompile Include="otsuFuncs.cpp" />
-    <ClCompile Include="PnmImage.cpp" />
     <ClCompile Include="test.h" />
   </ItemGroup>
   <ItemGroup>

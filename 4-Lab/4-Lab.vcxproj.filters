@@ -18,9 +18,6 @@
     <ClCompile Include="hard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PnmImage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="otsuFuncs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

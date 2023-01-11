@@ -15,4 +15,4 @@ double getPrefOmegaRange(const double* omega, int left, int right);
 
 double getPrefMuRange(const double* mu, int left, int right);
 
-std::vector<int> calculateOtsuThresholds(const PnmImage& image);
+std::vector<int> calculateOtsuThresholds(const PnmImage& image, bool ompEnabled = true);

@@ -2,7 +2,6 @@
 
 double* calculateProbabilities(const PnmImage& image)
 {
-    // Count
     auto* probability = new double[INTENSITY_LAYER_COUNT];
     memset(probability, 0.0, INTENSITY_LAYER_COUNT * sizeof(double));
     for (int x = 0; x < image.getXSize(); ++x)
@@ -13,7 +12,6 @@ double* calculateProbabilities(const PnmImage& image)
         }
     }
 
-    // Probability
     const int totalPixelCount = image.getXSize() * image.getYSize();
     for (int i = 0; i < INTENSITY_LAYER_COUNT; ++i)
     {
@@ -27,7 +25,6 @@ double* calculatePrefOmegas(const double* probability)
 {
     auto* omega = new double[INTENSITY_LAYER_COUNT];
     omega[0] = probability[0];
-    // Pref sum
     for (int i = 1; i < INTENSITY_LAYER_COUNT; ++i)
     {
         omega[i] = omega[i - 1] + probability[i];
@@ -58,22 +55,34 @@ double getPrefMuRange(const double* mu, const int left, const int right)
     return mu[right] - (left >= 0 ? mu[left] : 0.0);
 }
 
-std::vector<int> calculateOtsuThresholds(const PnmImage& image)
+double calculateSigmaForClass(const double* prefOmega, const double* prefMu, int left, int right)
 {
-    // Probabilities calculations
+    const double omegaRange = getPrefOmegaRange(prefOmega, left, right);
+    const double muRange = getPrefMuRange(prefMu, left, right);
+    return muRange * muRange / omegaRange;
+}
+
+double calculateSigma(const double* prefOmega, const double* prefMu, const int i, const int j, const int k)
+{
+    double sigma = 0.0;
+    sigma += calculateSigmaForClass(prefOmega, prefMu, -1, i);
+    sigma += calculateSigmaForClass(prefOmega, prefMu, i, j);
+    sigma += calculateSigmaForClass(prefOmega, prefMu, j, k);
+    sigma += calculateSigmaForClass(prefOmega, prefMu, k, INTENSITY_LAYER_COUNT - 1);
+
+    return sigma;
+}
+
+std::vector<int> calculateOtsuThresholds(const PnmImage& image, bool ompEnabled)
+{
     const auto* probability = calculateProbabilities(image);
-
-    // Omega's calculations
     const auto* prefOmega = calculatePrefOmegas(probability);
-
-    // Mu's calculations
     const auto* prefMu = calculatePrefMus(probability);
 
     std::vector<std::pair<double, std::vector<int>>> results;
-
-#pragma omp parallel
+#pragma omp parallel if (ompEnabled)
     {
-        double bestSigma = 0.0;
+        double localBestSigma = 0.0;
         std::vector<int> localBestThresholds(3);
 #pragma omp for
         for (int i = 1; i < INTENSITY_LAYER_COUNT - 3; ++i)
@@ -82,31 +91,15 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image)
             {
                 for (int k = j + 1; k < INTENSITY_LAYER_COUNT - 1; ++k)
                 {
-                    double sigma = 0.0;
+                    const double sigma = calculateSigma(prefOmega, prefMu, i, j, k);
 
-                    double omegaRange = getPrefOmegaRange(prefOmega, -1, i);
-                    double muRange = getPrefMuRange(prefMu, -1, i);
-                    sigma += muRange * muRange / omegaRange;
-
-                    omegaRange = getPrefOmegaRange(prefOmega, i, j);
-                    muRange = getPrefMuRange(prefMu, i, j);
-                    sigma += muRange * muRange / omegaRange;
-
-                    omegaRange = getPrefOmegaRange(prefOmega, j, k);
-                    muRange = getPrefMuRange(prefMu, j, k);
-                    sigma += muRange * muRange / omegaRange;
-
-                    omegaRange = getPrefOmegaRange(prefOmega, k, INTENSITY_LAYER_COUNT - 1);
-                    muRange = getPrefMuRange(prefMu, k, INTENSITY_LAYER_COUNT - 1);
-                    sigma += muRange * muRange / omegaRange;
-                    
-                    if (sigma > bestSigma)
+                    if (sigma > localBestSigma)
                     {
+                        localBestSigma = sigma;
+
                         localBestThresholds[0] = i;
                         localBestThresholds[1] = j;
                         localBestThresholds[2] = k;
-                        
-                        bestSigma = sigma;
                     }
                 }
             }
@@ -114,19 +107,18 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image)
 
 #pragma omp critical
         {
-            results.emplace_back(bestSigma, localBestThresholds);
+            results.emplace_back(localBestSigma, localBestThresholds);
         }
     }
 
-
-    double bestOverallSigma = 0.0;
-    int bestOverallIndex = 0;
+    double overallBestSigma = 0.0;
+    int overallBestIndex = 0;
     for (int i = 0; i < results.size(); ++i)
     {
-        if (results[i].first > bestOverallSigma)
+        if (results[i].first > overallBestSigma)
         {
-            bestOverallSigma = results[i].first;
-            bestOverallIndex = i;
+            overallBestSigma = results[i].first;
+            overallBestIndex = i;
         }
     }
 
@@ -134,5 +126,5 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image)
     delete[] prefOmega;
     delete[] prefMu;
 
-    return results[bestOverallIndex].second;
+    return results[overallBestIndex].second;
 }
