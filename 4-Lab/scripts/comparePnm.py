@@ -10,8 +10,8 @@ images = []
 
 
 pnmFuncs.putTogether([
+    # pnmFuncs.imageFromBinaryFile(
+    #     "..\\Release\\4k_out.pgm"),
     pnmFuncs.imageFromBinaryFile(
-        "..\\Release\\out.pgm"),
-    pnmFuncs.imageFromBinaryFile(
-        "..\\Release\\outOld.pgm")
+        "..\\Release\\koval_4k.pgm")
 ])
