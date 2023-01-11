@@ -87,17 +87,22 @@ public:
                     INTENSITY_LAYER_COUNT - 1) + "'");
         }
 
+        input.ignore(sizeof(char)); // \n
+
         storage.clear();
         storage.resize(sizeY);
+
+        auto* buff = new uint8_t[sizeX * sizeY];
+        input.read((char*)buff, sizeX * sizeY);
+
         for (int y = 0; y < sizeY; ++y)
         {
             for (int x = 0; x < sizeX; ++x)
             {
-                uint8_t uintBuff = 0;
-                input.read((char*)&uintBuff, sizeof(uint8_t));
-                storage.at(y).push_back(uintBuff);
+                storage.at(y).push_back(buff[sizeY * y + x]);
             }
         }
+        delete[] buff;
     }
 
     void saveToFile(const std::string& path) const
@@ -108,21 +113,21 @@ public:
         {
             throw std::ios_base::failure("Can`t open output file");
         }
-        output.write("P5\n", 3);
+        const std::string headerStr = "P5\n" + std::to_string(sizeX) + " " + std::to_string(sizeY) + "\n255\n";
+        output.write(headerStr.c_str(), headerStr.size());
+        
 
-        output.write(std::to_string(sizeX).c_str(), ceil(log10(sizeX)));
-        output.write(" ", 1);
-        output.write(std::to_string(sizeY).c_str(), ceil(log10(sizeY)));
-        output.write("\n", 1);
-        output.write("255\n", 4);
-
+        auto* buff = new uint8_t[sizeX * sizeY];
         for (int y = 0; y < sizeY; ++y)
         {
             for (int x = 0; x < sizeX; ++x)
             {
-                output.write((char*)&storage.at(y).at(x), sizeof(uint8_t));
+                buff[y * sizeY + x] = storage.at(y).at(x);
             }
         }
+
+        output.write((char*)buff, sizeX * sizeY);
+        delete[] buff;
     }
 
     void applyThresholds(const std::vector<int>& thresholds)

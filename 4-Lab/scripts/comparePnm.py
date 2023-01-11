@@ -13,9 +13,5 @@ pnmFuncs.putTogether([
     pnmFuncs.imageFromBinaryFile(
         "..\\Release\\out.pgm"),
     pnmFuncs.imageFromBinaryFile(
-        "..\\Release\\out2.pgm"),
-    pnmFuncs.imageFromBinaryFile(
-        "..\\Release\\out3.pgm"),
-    pnmFuncs.imageFromBinaryFile(
-        "..\\Debug\\out.pgm")
+        "..\\Release\\outOld.pgm")
 ])

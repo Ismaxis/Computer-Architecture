@@ -62,17 +62,6 @@ double calculateSigmaForClass(const double* prefOmega, const double* prefMu, int
     return muRange * muRange / omegaRange;
 }
 
-double calculateSigma(const double* prefOmega, const double* prefMu, const int i, const int j, const int k)
-{
-    double sigma = 0.0;
-    sigma += calculateSigmaForClass(prefOmega, prefMu, -1, i);
-    sigma += calculateSigmaForClass(prefOmega, prefMu, i, j);
-    sigma += calculateSigmaForClass(prefOmega, prefMu, j, k);
-    sigma += calculateSigmaForClass(prefOmega, prefMu, k, INTENSITY_LAYER_COUNT - 1);
-
-    return sigma;
-}
-
 std::vector<int> calculateOtsuThresholds(const PnmImage& image, bool ompEnabled)
 {
     const auto* probability = calculateProbabilities(image);
@@ -87,15 +76,21 @@ std::vector<int> calculateOtsuThresholds(const PnmImage& image, bool ompEnabled)
 #pragma omp for
         for (int i = 1; i < INTENSITY_LAYER_COUNT - 3; ++i)
         {
+            const double firstClassSigma = calculateSigmaForClass(prefOmega, prefMu, -1, i);
             for (int j = i + 1; j < INTENSITY_LAYER_COUNT - 2; ++j)
             {
+                const double secondClassSigma = calculateSigmaForClass(prefOmega, prefMu, i, j);
                 for (int k = j + 1; k < INTENSITY_LAYER_COUNT - 1; ++k)
                 {
-                    const double sigma = calculateSigma(prefOmega, prefMu, i, j, k);
+                    const double thirdClassSigma = calculateSigmaForClass(prefOmega, prefMu, j, k);
+                    const double fourthClassSigma = calculateSigmaForClass(
+                        prefOmega, prefMu, k, INTENSITY_LAYER_COUNT - 1);
 
-                    if (sigma > localBestSigma)
+
+                    const double curSigma = firstClassSigma + secondClassSigma + thirdClassSigma + fourthClassSigma;
+                    if (curSigma > localBestSigma)
                     {
-                        localBestSigma = sigma;
+                        localBestSigma = curSigma;
 
                         localBestThresholds[0] = i;
                         localBestThresholds[1] = j;
