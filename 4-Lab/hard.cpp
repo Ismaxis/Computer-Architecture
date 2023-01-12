@@ -1,4 +1,7 @@
 #include <iostream>
+#include <fstream>
+#include <cstring>
+#include <vector>
 
 #include "otsuFuncs.h"
 
@@ -40,17 +43,15 @@ int main(const int argc, const char* argv[])
         {
             omp_set_num_threads(threadsCount);
         }
-        const int chunkSize = argc > 4 ? std::stoi(argv[4]) : 1;
         const bool isOmpEnabled = threadsCount != -1;
 
         const double start = omp_get_wtime();
-        const std::vector<int> thresholds = calculateOtsuThresholds(image, isOmpEnabled, chunkSize);
-        image.applyThresholds(thresholds, isOmpEnabled, chunkSize);
+        const std::vector<int> thresholds = calculateOtsuThresholds(image, isOmpEnabled);
+        image.applyThresholds(thresholds, isOmpEnabled);
         const double end = omp_get_wtime();
 
         printf("Time (%i thread(s)): %g ms\n", threadsCount == 0 ? omp_get_max_threads() : threadsCount,
                (end - start) * 1000);
-        //printf("%g\n", (end - start) * 1000);
         printf("%u %u %u\n", thresholds[0], thresholds[1], thresholds[2]);
 
         image.saveToFile(out);

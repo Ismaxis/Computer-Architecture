@@ -41,7 +41,7 @@ public:
         {
             throw std::ios_base::failure("Can`t open input file");
         }
-        
+
         std::string type;
         input >> type;
         if (type != "P5")
@@ -70,7 +70,7 @@ public:
             const std::string message = "Width, Height and hues count should be numbers:\n\tWidth: " + width +
                 "\n\tHeight: " + height +
                 "\n\tHues Count: " + huesCountStr;
-            throw std::runtime_error(message);            
+            throw std::runtime_error(message);
         }
 
         if (sizeX <= 0 || sizeY <= 0)
@@ -78,7 +78,7 @@ public:
             throw std::runtime_error("Width and Height should be positive:\n\tWidth: " + width +
                 "\n\tHeight: " + height);
         }
-        
+
         if (huesCount != 255)
         {
             throw std::runtime_error(
@@ -97,7 +97,7 @@ public:
             {
                 uint8_t uintBuff = 0;
                 input.read((char*)&uintBuff, sizeof(uint8_t));
-                storage.at(y).push_back(uintBuff); 
+                storage.at(y).push_back(uintBuff);
             }
         }
     }
@@ -117,18 +117,18 @@ public:
         {
             for (int x = 0; x < sizeX; ++x)
             {
-                output.write((char*)&storage.at(y).at(x), sizeof(uint8_t)); 
+                output.write((char*)&storage.at(y).at(x), sizeof(uint8_t));
             }
         }
     }
 
-    void applyThresholds(const std::vector<int>& thresholds, const bool ompEnabled = true, const int chunkSize = 1)
+    void applyThresholds(const std::vector<int>& thresholds, const bool ompEnabled = true)
     {
         auto* classes = new uint8_t[INTENSITY_LAYER_COUNT];
         fillClassesArray(classes, thresholds);
 #pragma omp parallel if (ompEnabled)
         {
-#pragma omp for schedule(static, chunkSize)
+#pragma omp for schedule(static)
             for (int y = 0; y < getYSize(); ++y)
             {
                 for (int x = 0; x < getXSize(); ++x)
