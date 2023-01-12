@@ -128,7 +128,7 @@ public:
         fillClassesArray(classes, thresholds);
 #pragma omp parallel if (ompEnabled)
         {
-#pragma omp for schedule(static)
+#pragma omp for schedule(static, chunkSize)
             for (int y = 0; y < getYSize(); ++y)
             {
                 for (int x = 0; x < getXSize(); ++x)
